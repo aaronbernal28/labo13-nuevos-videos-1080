@@ -295,7 +295,8 @@ All experimental paths, detection thresholds, and per-video trim intervals are c
   - Set `t_start` and/or `t_end` to integer seconds (e.g. `t_start: 2`, `t_end: 25`) to restrict frame extraction to $t_{\text{start}} \le t < t_{\text{end}}$.
   - Leave `null` (`t_start: null`, `t_end: null`) for no trimming.
   - Frame filenames (`{video}_f{index:06d}_t{seconds:.4f}.png`) preserve the original frame index and timestamp, so expanding a trim interval only runs `detect_frame` on newly added frames.
-- **Segmentation Parameters (`parameters:`)**:
+- **Frame Rate & Extraction Parameters (`parameters:`)**:
+  - `fps: 60` — target extraction frame rate (`1`–`60`, default and maximum `60`; lower to e.g. `6` or `10` to subsample 1-in-10 or 1-in-6 frames for fast testing).
   - `threshold_low: 100.0` — lower bound on background-subtracted intensity (`background - frame`).
   - `threshold_high: 200.0` — upper bound on background-subtracted intensity.
   - `morphology_disk_radius: 2` — disk radius in pixels for `skimage.morphology.closing`.
