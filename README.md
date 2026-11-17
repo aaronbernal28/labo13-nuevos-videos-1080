@@ -159,8 +159,8 @@ labo13-nuevos-videos-1080/
 |---|---|---|---|
 | `video_name` | `str` | — | Video identifier matching the key in `config.yaml` (e.g. `IMG_1556`) |
 | `t` | `float` | seconds (`s`) | Original video presentation timestamp (PTS) of the frame (not reset to 0 when trimmed) |
-| `x` | `float` | pixels (`px`) | Horizontal bob centroid coordinate (origin at top-left image corner; `NaN` if undetected) |
-| `y` | `float` | pixels (`px`) | Vertical bob centroid coordinate (origin at top-left image corner; grows downward; `NaN` if undetected) |
+| `x` | `int \| NaN` | pixels (`px`) | Horizontal bob centroid rounded to nearest integer pixel (origin top-left; `nan` if undetected) |
+| `y` | `int \| NaN` | pixels (`px`) | Vertical bob centroid rounded to nearest integer pixel (origin top-left; grows downward; `nan` if undetected) |
 
 ---
 
@@ -236,16 +236,16 @@ IMG_1556	122	2.0347	IMG_1556_f000122_t2.0347	media/frames/IMG_1556/IMG_1556_f000
 **Illustrative `media/frames/IMG_1556/IMG_1556_f000120_t2.0013.txt`** (1 row, no header):
 
 ```text
-IMG_1556,2.0013,812.400000,503.100000
+IMG_1556,2.0013,812,503
 ```
 
 **Illustrative `results/trajectories.csv`** (showing a normal detection and an undetected `nan` frame):
 
 ```csv
 video_name,t,x,y
-IMG_1556,2.001300,812.400000,503.100000
-IMG_1556,2.018000,814.125000,504.375000
-IMG_1556,2.034700,nan,nan
+IMG_1556,2.0013,812,503
+IMG_1556,2.0180,814,504
+IMG_1556,2.0347,nan,nan
 ```
 
 ---
