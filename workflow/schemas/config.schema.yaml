@@ -39,6 +39,7 @@ properties:
     type: "object"
     required:
       - "background_image_key"
+      - "fps"
       - "threshold_low"
       - "threshold_high"
       - "morphology_disk_radius"
@@ -48,6 +49,10 @@ properties:
     properties:
       background_image_key:
         type: "string"
+      fps:
+        type: "integer"
+        minimum: 1
+        maximum: 60
       threshold_low:
         type: "number"
         minimum: 0.0
