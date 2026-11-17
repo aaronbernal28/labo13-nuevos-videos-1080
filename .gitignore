@@ -1,6 +1,30 @@
+# Raw media and extracted frames
+media/
 videos/
 *.MOV
 *.mov
 *.mp4
-.ipynb_checkpoints/
+
+# Snakemake & runtime artifacts
+.snakemake/
+logs/
+benchmarks/
+
+# Python virtual environments & caches
+.venv/
+venv/
 __pycache__/
+*.py[cod]
+*.egg-info/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+dist/
+build/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Secrets & local environment variables
+.env
+*.secret

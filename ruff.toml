@@ -1,0 +1,39 @@
+# Standard ruff.toml for Python + Snakemake workflows
+# Recognizes Snakemake global runner and enforces tab indentation.
+
+builtins = ["snakemake"]
+exclude = [
+	"scripts/deprecated",
+	"media",
+	"results",
+	".snakemake",
+	".venv",
+	"Snakefile",
+	"*.smk",
+	"rules/*.smk",
+	"*.ipynb",
+]
+
+[format]
+indent-style = "tab"
+line-ending = "lf"
+
+[lint]
+select = [
+	"E",   # pycodestyle errors
+	"W",   # pycodestyle warnings
+	"F",   # pyflakes
+	"I",   # isort
+	"UP",  # pyupgrade
+	"B",   # flake8-bugbear
+]
+ignore = [
+	"W191", # tab indentation in PEP8
+	"E111", # indentation not multiple of 4
+	"E114", # comment indentation not multiple of 4
+	"E117", # over-indented
+	"D206", # docstring tab indentation
+]
+
+[lint.isort]
+lines-after-imports = 2
