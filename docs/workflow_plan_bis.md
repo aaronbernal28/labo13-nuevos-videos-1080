@@ -63,18 +63,15 @@ Build a reproducible, strictly typed, 3-tier **Python + Snakemake** pipeline in 
 
 ---
 
-## Open Questions
+## Resolved Design Decisions
 
-> [!IMPORTANT]
-> Please confirm your preference on these four items before implementation begins:
-> 1. **Initial `compute_bob_centroid` body in `src/labo13/detection.py`**:
->    - *(Recommended)* Port the original Colab notebook's background-subtraction + threshold (`100 < diff < 200`) + `skimage.morphology.closing(..., disk(2))` + largest connected-component centroid as a working baseline that you can edit later, **or** leave it as a pure `return (float("nan"), float("nan"))` stub?
-> 2. **Git tracking for `results/trajectories.csv`**:
->    - *(Recommended)* Track `results/trajectories.csv` in Git so `notebooks/analysis.ipynb` runs standalone without re-downloading multi-GB videos, **or** gitignore `results/`?
-> 3. **Execution Environment**:
->    - *(Recommended)* Manage dependencies via `uv` + `pyproject.toml` (`.venv` editable install `uv pip install -e ".[dev]"`), **or** also include per-rule `envs/default.yaml` Conda specifications?
-> 4. **Original Colab Notebook Location**:
->    - Keep `Copia de [LABO 13] Nuevos Videos 1080.ipynb` at the repository root as committed in `b692f99`, **or** move it under `notebooks/original/`?
+| Decision Area | Final Choice |
+|---|---|
+| **Detection algorithm & parameters** | Port Colab method (`background - frame`, `threshold_low < diff < threshold_high`, `closing(disk(morphology_disk_radius))`, largest region centroid) parameterized in `config.yaml` with Colab defaults (`threshold_low: 100.0`, `threshold_high: 200.0`, `morphology_disk_radius: 2`). |
+| **Git tracking of `results/trajectories.csv`** | **Tracked in Git** so `notebooks/analysis.ipynb` runs standalone without downloading raw videos. |
+| **Execution environment** | **`uv` + `pyproject.toml`** (`.venv` editable install `uv pip install -e ".[dev]"`). |
+| **Original Colab notebook path** | Moved via `git mv` to `notebooks/original/Copia de [LABO 13] Nuevos Videos 1080.ipynb`. |
+| **`IMG_1570.MOV` & snapshot images** | `IMG_1570.MOV` (measurement evidence) and the 5 single-frame snapshot images are commented out in `config.yaml`; only `IMG_1555`–`IMG_1569` and `superfotograma` are active. |
 
 ---
 
@@ -128,7 +125,6 @@ labo13-nuevos-videos-1080/
 ├── .env.example                           ← Template for optional environment variables (never commit .env)
 ├── .gitignore                             ← Ignores media/, .snakemake/, .venv/, .env, checkpoints
 ├── README.md                              ← Project overview, ASCII tree, setup & Snakemake commands
-├── Copia de [LABO 13] Nuevos Videos 1080.ipynb ← Original unmodified Colab notebook (baseline reference)
 ├── docs/
 │   ├── workflow_plan.md                   ← Initial interview summary plan
 │   └── workflow_plan_bis.md               ← Extended convention-compliant implementation plan
@@ -158,6 +154,8 @@ labo13-nuevos-videos-1080/
 │   ├── test_video.py                      ← Tests integer-second trim predicates & filename formatting
 │   └── test_detection.py                  ← Tests synthetic circle centroid & NaN fallback on empty frame
 ├── notebooks/
+│   ├── original/
+│   │   └── Copia de [LABO 13] Nuevos Videos 1080.ipynb ← Original unmodified Colab notebook
 │   └── analysis.ipynb                     ← Stage 2 analysis reading results/trajectories.csv
 ├── media/                                 ← Gitignored raw media and intermediate frame artifacts
 │   ├── raw/
@@ -612,12 +610,13 @@ rule detect_frame:
 
 ## 4. Scoped Conventional Commit Sequence (`python-snakemake-conventions` §6)
 
-1. **`chore(deps)`**: `pyproject.toml`, `ruff.toml`, `.gitignore`, `.env.example`
-2. **`config(config)`**: `config.yaml`, `workflow/schemas/config.schema.yaml`
-3. **`feat(src)`**: `src/labo13/{__init__,types,io,video,detection,physics}.py` + `tests/test_*.py`
-4. **`feat(scripts)`**: `scripts/{download_file,extract_frames,detect_frame,aggregate_csv}.py`
-5. **`feat(rules)`**: `Snakefile`, `rules/{00_download,01_frames,02_detect,03_aggregate}.smk`
-6. **`docs(readme)`**: `README.md` updated with annotated ASCII tree, 3-line library quick-start, and Snakemake CLI commands
+1. **`chore(notebooks)`**: `git mv "Copia de [LABO 13] Nuevos Videos 1080.ipynb" "notebooks/original/Copia de [LABO 13] Nuevos Videos 1080.ipynb"`
+2. **`chore(deps)`**: `pyproject.toml`, `ruff.toml`, `.gitignore`, `.env.example`
+3. **`config(config)`**: `config.yaml`, `workflow/schemas/config.schema.yaml`
+4. **`feat(src)`**: `src/labo13/{__init__,types,io,video,detection,physics}.py` + `tests/test_*.py`
+5. **`feat(scripts)`**: `scripts/{download_file,extract_frames,detect_frame,aggregate_csv}.py`
+6. **`feat(rules)`**: `Snakefile`, `rules/{00_download,01_frames,02_detect,03_aggregate}.smk`
+7. **`docs(readme)`**: `README.md` updated with annotated ASCII tree, 3-line library quick-start, and Snakemake CLI commands
 
 ---
 
