@@ -194,6 +194,24 @@ uv run snakemake media/frames/IMG_1556.manifest.tsv --cores 1
 uv run snakemake media/frames/IMG_1556/IMG_1556_f000120_t2.0013.txt --cores 1
 ```
 
+### Processing an Existing Frame PNG Directly (`IMG_1555_f001371_t22.8500.png`)
+
+In Snakemake, you always request the **output** file you want to produce, not the input `.png`. Given an extracted frame such as `media/frames/IMG_1555/IMG_1555_f001371_t22.8500.png`, its corresponding detection target is `media/frames/IMG_1555/IMG_1555_f001371_t22.8500.txt` (rule `detect_frame`):
+
+```bash
+# 1. Dry-run: verify Snakemake only schedules detect_frame (plus download_image if superfotograma.png is missing)
+uv run snakemake media/frames/IMG_1555/IMG_1555_f001371_t22.8500.txt -n
+
+# 2. Execute detection for that single frame only
+uv run snakemake media/frames/IMG_1555/IMG_1555_f001371_t22.8500.txt --cores 1
+
+# 3. Force re-running only detect_frame on that frame (e.g., after tuning thresholds in config.yaml)
+uv run snakemake media/frames/IMG_1555/IMG_1555_f001371_t22.8500.txt --cores 1 --force
+```
+
+- Because `media/frames/IMG_1555/IMG_1555_f001371_t22.8500.png` already exists on disk, Snakemake resolves `detect_frame` directly from the `.png` and `media/raw/images/superfotograma.png` without re-running `extract_frames` or processing other frames.
+- `--force` (`-f`) re-runs only the final target rule (`detect_frame`) for that `.txt` file, leaving upstream videos and images untouched.
+
 ### 3. Artifacts & Illustrative File Contents
 
 | Step / Rule | Generated Artifact | Illustrative Content / Purpose |
