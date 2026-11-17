@@ -39,6 +39,8 @@ properties:
       - "threshold_low"
       - "threshold_high"
       - "morphology_disk_radius"
+      - "frame_batch_size"
+      - "png_compress_level"
     additionalProperties: false
     properties:
       background_image_key:
@@ -54,6 +56,13 @@ properties:
       morphology_disk_radius:
         type: "integer"
         minimum: 1
+      frame_batch_size:
+        type: "integer"
+        minimum: 1
+      png_compress_level:
+        type: "integer"
+        minimum: 0
+        maximum: 9
   images:
     type: "object"
     minProperties: 1
