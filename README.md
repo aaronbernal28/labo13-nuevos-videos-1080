@@ -110,12 +110,14 @@ labo13-nuevos-videos-1080/
 │   ├── 00_download.smk                    ← Parallel rules download_video & download_image (gdown)
 │   ├── 01_frames.smk                      ← Checkpoint extract_frames (grey PNGs + manifest TSV)
 │   ├── 02_detect.smk                      ← Rule detect_frame (parallel 1-job-per-frame centroid TXT)
-│   └── 03_aggregate.smk                   ← Rule aggregate_csv (checkpoint aggregation into CSV)
+│   ├── 03_aggregate.smk                   ← Rule aggregate_csv (checkpoint aggregation into CSV)
+│   └── 04_plot.smk                        ← Rule plot_video_trajectory (overlay x,y on initial frame)
 ├── scripts/                               ← Tier 2: Thin Snakemake adapter scripts (*.py)
 │   ├── download_file.py                   ← Unpacks snakemake -> labo13.io.download_drive_file
 │   ├── extract_frames.py                  ← Unpacks snakemake -> labo13.video.extract_trimmed_frames_gray
 │   ├── detect_frame.py                    ← Unpacks snakemake -> labo13.detection.compute_bob_centroid
-│   └── aggregate_csv.py                   ← Unpacks snakemake -> labo13.io.build_trajectories_dataframe
+│   ├── aggregate_csv.py                   ← Unpacks snakemake -> labo13.io.build_trajectories_dataframe
+│   └── plot_trajectory.py                 ← Unpacks snakemake -> labo13.video.plot_trajectory_on_frame
 ├── src/                                   ← Tier 1: Pure modular domain library (zero Snakemake coupling)
 │   └── labo13/
 │       ├── __init__.py                    ← Package exports and version
@@ -152,6 +154,7 @@ labo13-nuevos-videos-1080/
 | `extract_frames` *(checkpoint)* | `media/raw/videos/{video}.MOV` | `media/frames/{video}/`, `media/frames/{video}.manifest.tsv` | Extracts trimmed greyscale PNG frames `{video}_f{index:06d}_t{seconds:.4f}.png` |
 | `detect_frame` | `media/frames/{video}/{stem}.png`, `media/raw/images/superfotograma.png` | `media/frames/{video}/{stem}.txt` | Runs **1 job per frame** writing a single CSV line `video_name,t,x,y` |
 | `aggregate_csv` | All `media/frames/{video}/{stem}.txt` | `results/trajectories.csv` | Concatenates and sorts all per-frame detections by `(video_name, t)` |
+| `plot_video_trajectory` | All `media/frames/{video}/{stem}.txt` for `{video}` | `results/plots/{video}_trajectory.png` | Plots all detected `(x, y)` points for `{video}` over its initial extracted frame PNG |
 
 ### Output CSV Schema (`results/trajectories.csv`)
 
@@ -192,6 +195,9 @@ uv run snakemake media/frames/IMG_1556.manifest.tsv --cores 1
 
 # Step C: Run detection for a single frame (1 Snakemake job)
 uv run snakemake media/frames/IMG_1556/IMG_1556_f000120_t2.0013.txt --cores 1
+
+# Step D: Plot all detected (x, y) points for IMG_1556 over its initial extracted frame
+uv run snakemake results/plots/IMG_1556_trajectory.png --cores all
 ```
 
 ### Processing an Existing Frame PNG Directly (`IMG_1555_f001371_t22.8500.png`)
