@@ -29,6 +29,7 @@ from labo13.video import (
 	load_image_gray,
 	load_video_frame_gray,
 	plot_sampled_frames,
+	plot_trajectory_on_frame,
 	save_frame_batch_gray,
 	save_image_gray,
 )
@@ -57,6 +58,7 @@ __all__: list[str] = [
 	"load_video_frame_gray",
 	"parse_stem_metadata",
 	"plot_sampled_frames",
+	"plot_trajectory_on_frame",
 	"save_frame_batch_gray",
 	"save_frame_detection_row",
 	"save_frame_manifest",

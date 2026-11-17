@@ -3,6 +3,7 @@ from pathlib import Path
 import av
 import numpy as np
 import numpy.typing as npt
+import pandas as pd
 
 from labo13.types import FrameRecord
 from labo13.video import (
@@ -10,6 +11,7 @@ from labo13.video import (
 	format_frame_stem,
 	is_within_time_bounds,
 	load_image_gray,
+	plot_trajectory_on_frame,
 	save_frame_batch_gray,
 )
 
@@ -70,3 +72,24 @@ def test_extract_trimmed_frames_gray_batched(tmp_path: Path) -> None:
 	assert len(records) == 5
 	for rec in records:
 		assert rec.png_path.exists()
+
+
+def test_plot_trajectory_on_frame(tmp_path: Path) -> None:
+	initial_frame: npt.NDArray[np.uint8] = np.full((60, 80), 200, dtype=np.uint8)
+	df_video: pd.DataFrame = pd.DataFrame(
+		{
+			"video_name": ["IMG_1556", "IMG_1556", "IMG_1556"],
+			"t": [2.0, 2.0167, 2.0334],
+			"x": pd.Series([20, 40, pd.NA], dtype="Int64"),
+			"y": pd.Series([30, 35, pd.NA], dtype="Int64"),
+		}
+	)
+	out_png: Path = tmp_path / "IMG_1556_trajectory.png"
+	plot_trajectory_on_frame(
+		initial_frame_gray=initial_frame,
+		df_video=df_video,
+		output_path=out_png,
+		video_name="IMG_1556",
+	)
+	assert out_png.exists()
+	assert out_png.stat().st_size > 0

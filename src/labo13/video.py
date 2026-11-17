@@ -5,6 +5,7 @@ import av
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
+import pandas as pd
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from PIL import Image
@@ -185,3 +186,32 @@ def extract_trimmed_frames_gray(
 		pending_batch.clear()
 
 	return records
+
+
+def plot_trajectory_on_frame(
+	initial_frame_gray: npt.NDArray[np.uint8],
+	df_video: pd.DataFrame,
+	output_path: Path,
+	video_name: str = "",
+) -> Figure:
+	"""Plot detected (x, y) trajectory points over the video's initial frame."""
+	output_path.parent.mkdir(parents=True, exist_ok=True)
+	df_valid: pd.DataFrame = df_video.dropna(subset=["x", "y"])
+
+	fig, ax = plt.subplots(figsize=(12, 7))
+	ax.imshow(initial_frame_gray, cmap="gray")
+	ax.scatter(
+		df_valid["x"].to_numpy(dtype=np.float64),
+		df_valid["y"].to_numpy(dtype=np.float64),
+		color="C1",
+		s=5,
+	)
+	if video_name:
+		ax.set_title(
+			f"{video_name} — Trajectory ({len(df_valid)}/{len(df_video)} frames)"
+		)
+	ax.axis("off")
+	fig.tight_layout()
+	fig.savefig(output_path, dpi=150, bbox_inches="tight")
+	plt.close(fig)
+	return fig
