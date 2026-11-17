@@ -1,0 +1,92 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: "Labo13WorkflowConfigSchema"
+description: "Validation schema for LABO 13 pendulum tracking pipeline config.yaml"
+type: "object"
+required:
+  - "paths"
+  - "parameters"
+  - "images"
+  - "videos"
+additionalProperties: false
+properties:
+  paths:
+    type: "object"
+    required:
+      - "videos_dir"
+      - "images_dir"
+      - "frames_dir"
+      - "trajectories_csv"
+      - "logs_dir"
+      - "benchmarks_dir"
+    additionalProperties: false
+    properties:
+      videos_dir:
+        type: "string"
+      images_dir:
+        type: "string"
+      frames_dir:
+        type: "string"
+      trajectories_csv:
+        type: "string"
+      logs_dir:
+        type: "string"
+      benchmarks_dir:
+        type: "string"
+  parameters:
+    type: "object"
+    required:
+      - "background_image_key"
+      - "threshold_low"
+      - "threshold_high"
+      - "morphology_disk_radius"
+    additionalProperties: false
+    properties:
+      background_image_key:
+        type: "string"
+      threshold_low:
+        type: "number"
+        minimum: 0.0
+        maximum: 255.0
+      threshold_high:
+        type: "number"
+        minimum: 0.0
+        maximum: 255.0
+      morphology_disk_radius:
+        type: "integer"
+        minimum: 1
+  images:
+    type: "object"
+    minProperties: 1
+    additionalProperties:
+      type: "object"
+      required:
+        - "file"
+        - "url"
+      additionalProperties: false
+      properties:
+        file:
+          type: "string"
+        url:
+          type: "string"
+  videos:
+    type: "object"
+    minProperties: 1
+    additionalProperties:
+      type: "object"
+      required:
+        - "file"
+        - "url"
+        - "t_start"
+        - "t_end"
+      additionalProperties: false
+      properties:
+        file:
+          type: "string"
+        url:
+          type: "string"
+        t_start:
+          type: ["integer", "null"]
+          minimum: 0
+        t_end:
+          type: ["integer", "null"]
+          minimum: 1
