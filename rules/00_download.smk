@@ -1,5 +1,5 @@
 rule download_video:
-	'''Download a single raw .MOV video from Google Drive in parallel.'''
+	"""Download a single raw .MOV video from Google Drive in parallel."""
 	wildcard_constraints:
 		video = VIDEO_REGEX
 	output:
@@ -9,16 +9,18 @@ rule download_video:
 	benchmark:
 		f"{config['paths']['benchmarks_dir']}/download_video/{{video}}.tsv"
 	params:
-		url = lambda wildcards: config["videos"][wildcards.video]["url"]
+		url = get_video_url
 	threads: 1
 	resources:
 		mem_mb = 500
+	conda:
+		"../envs/default.yaml"
 	script:
 		"../scripts/download_file.py"
 
 
 rule download_image:
-	'''Download a single reference or background image from Google Drive in parallel.'''
+	"""Download a single reference or background image from Google Drive in parallel."""
 	wildcard_constraints:
 		image_file = IMAGE_FILE_REGEX
 	output:
@@ -28,11 +30,11 @@ rule download_image:
 	benchmark:
 		f"{config['paths']['benchmarks_dir']}/download_image/{{image_file}}.tsv"
 	params:
-		url = lambda wildcards: next(
-			v["url"] for v in config["images"].values() if v["file"] == wildcards.image_file
-		)
+		url = get_image_url
 	threads: 1
 	resources:
 		mem_mb = 500
+	conda:
+		"../envs/default.yaml"
 	script:
 		"../scripts/download_file.py"

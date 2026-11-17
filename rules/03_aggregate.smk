@@ -1,23 +1,10 @@
-from pathlib import Path
-import pandas as pd
-
-
-def collect_detected_frame_txts(wildcards) -> list[str]:
-	'''Resolve checkpoint manifests to list all expected per-frame .txt files across active videos.'''
-	txt_files: list[str] = []
-	frames_root: str = config["paths"]["frames_dir"]
-	for video in VIDEOS:
-		ckpt_output = checkpoints.extract_frames.get(video=video).output
-		manifest_path: Path = Path(ckpt_output.manifest_tsv)
-		df_manifest: pd.DataFrame = pd.read_csv(manifest_path, sep="\t")
-		for stem in df_manifest["stem"].astype(str):
-			txt_files.append(f"{frames_root}/{video}/{stem}.txt")
-	return txt_files
-
-
 rule aggregate_csv:
-	'''Concatenate all per-frame .txt detection rows into results/trajectories.csv.'''
+	"""Concatenate all per-frame .txt detection rows into results/trajectories.csv."""
 	input:
+		manifests = [
+			f"{config['paths']['frames_dir']}/{video}.manifest.tsv"
+			for video in VIDEOS
+		],
 		frame_txts = collect_detected_frame_txts
 	output:
 		trajectories_csv = config["paths"]["trajectories_csv"]
@@ -28,5 +15,7 @@ rule aggregate_csv:
 	threads: 1
 	resources:
 		mem_mb = 1000
+	conda:
+		"../envs/default.yaml"
 	script:
 		"../scripts/aggregate_csv.py"

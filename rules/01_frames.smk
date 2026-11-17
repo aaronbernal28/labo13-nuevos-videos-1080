@@ -1,5 +1,5 @@
 checkpoint extract_frames:
-	'''Convert a downloaded video to greyscale PNG frames within configured [t_start, t_end) bounds.'''
+	"""Convert a downloaded video to greyscale PNG frames within configured [t_start, t_end) bounds."""
 	wildcard_constraints:
 		video = VIDEO_REGEX
 	input:
@@ -12,10 +12,12 @@ checkpoint extract_frames:
 	benchmark:
 		f"{config['paths']['benchmarks_dir']}/extract_frames/{{video}}.tsv"
 	params:
-		t_start = lambda wildcards: config["videos"][wildcards.video]["t_start"],
-		t_end = lambda wildcards: config["videos"][wildcards.video]["t_end"]
+		t_start = get_video_t_start,
+		t_end = get_video_t_end
 	threads: 1
 	resources:
 		mem_mb = 2000
+	conda:
+		"../envs/default.yaml"
 	script:
 		"../scripts/extract_frames.py"

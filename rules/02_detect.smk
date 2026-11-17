@@ -1,5 +1,5 @@
 rule detect_frame:
-	'''Detect pendulum bob centroid for a single greyscale frame and write one CSV row to .txt.'''
+	"""Detect pendulum bob centroid for a single greyscale frame and write one CSV row to .txt."""
 	wildcard_constraints:
 		video = VIDEO_REGEX,
 		stem = r".+_f\d{6}_t\d+\.\d{4}"
@@ -19,5 +19,7 @@ rule detect_frame:
 	threads: 1
 	resources:
 		mem_mb = 500
+	conda:
+		"../envs/default.yaml"
 	script:
 		"../scripts/detect_frame.py"
