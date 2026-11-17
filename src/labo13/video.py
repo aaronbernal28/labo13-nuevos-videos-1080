@@ -1,3 +1,4 @@
+from concurrent.futures import Future, ThreadPoolExecutor
 from pathlib import Path
 
 import av
@@ -38,10 +39,47 @@ def load_image_gray(image_path: Path) -> npt.NDArray[np.uint8]:
 	return arr
 
 
-def save_image_gray(frame_gray: npt.NDArray[np.uint8], output_path: Path) -> None:
+def save_image_gray(
+	frame_gray: npt.NDArray[np.uint8],
+	output_path: Path,
+	compress_level: int = 1,
+) -> None:
 	"""Save a 2D uint8 greyscale array as a lossless PNG."""
 	output_path.parent.mkdir(parents=True, exist_ok=True)
-	Image.fromarray(frame_gray, mode="L").save(output_path, format="PNG")
+	Image.fromarray(frame_gray, mode="L").save(
+		output_path, format="PNG", compress_level=compress_level
+	)
+
+
+def save_frame_batch_gray(
+	batch: list[tuple[npt.NDArray[np.uint8], Path]],
+	max_workers: int = 4,
+	compress_level: int = 1,
+) -> None:
+	"""Flush a batch of greyscale frames to disk in parallel."""
+	if not batch:
+		return
+	if max_workers <= 1 or len(batch) == 1:
+		for frame_gray, output_path in batch:
+			save_image_gray(
+				frame_gray=frame_gray,
+				output_path=output_path,
+				compress_level=compress_level,
+			)
+		return
+
+	with ThreadPoolExecutor(max_workers=max_workers) as executor:
+		futures: list[Future[None]] = [
+			executor.submit(
+				save_image_gray,
+				frame_gray,
+				output_path,
+				compress_level,
+			)
+			for frame_gray, output_path in batch
+		]
+		for future in futures:
+			future.result()
 
 
 def load_video_frame_gray(
@@ -82,15 +120,21 @@ def extract_trimmed_frames_gray(
 	output_dir: Path,
 	t_start: int | None = None,
 	t_end: int | None = None,
+	batch_size: int = 64,
+	max_workers: int = 4,
+	compress_level: int = 1,
 ) -> list[FrameRecord]:
-	"""Decode video to greyscale PNG frames within [t_start, t_end) bounds."""
+	"""Decode video to greyscale PNG frames within [t_start, t_end) in batches."""
 	if t_start is not None and t_end is not None and t_start >= t_end:
 		raise ValueError(
 			f"Invalid trim bounds for {video_name}: t_start={t_start} >= t_end={t_end}"
 		)
+	if batch_size < 1:
+		raise ValueError(f"batch_size must be >= 1, got {batch_size}")
 
 	output_dir.mkdir(parents=True, exist_ok=True)
 	records: list[FrameRecord] = []
+	pending_batch: list[tuple[npt.NDArray[np.uint8], Path]] = []
 
 	with av.open(str(video_path)) as container:
 		stream = container.streams.video[0]
@@ -114,7 +158,7 @@ def extract_trimmed_frames_gray(
 				video_name=video_name, frame_index=idx, t_sec=t_sec
 			)
 			png_path: Path = output_dir / f"{stem}.png"
-			save_image_gray(frame_gray=frame_gray, output_path=png_path)
+			pending_batch.append((frame_gray, png_path))
 			records.append(
 				FrameRecord(
 					video_name=video_name,
@@ -124,5 +168,20 @@ def extract_trimmed_frames_gray(
 					png_path=png_path,
 				)
 			)
+			if len(pending_batch) >= batch_size:
+				save_frame_batch_gray(
+					batch=pending_batch,
+					max_workers=max_workers,
+					compress_level=compress_level,
+				)
+				pending_batch.clear()
+
+	if pending_batch:
+		save_frame_batch_gray(
+			batch=pending_batch,
+			max_workers=max_workers,
+			compress_level=compress_level,
+		)
+		pending_batch.clear()
 
 	return records
