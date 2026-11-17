@@ -164,6 +164,104 @@ labo13-nuevos-videos-1080/
 
 ---
 
+## Worked Example: One Video & One Frame (Illustrative — Not Run)
+
+The trace below shows how **one video** (`IMG_1556`) and **one frame** (frame `120` at `t = 2.0013 s`) move through the pipeline without executing it on real media.
+
+### 1. Configure `IMG_1556` in `config.yaml`
+
+Keep `IMG_1556` active (comment out other videos while testing) and optionally set integer-second trim bounds:
+
+```yaml
+videos:
+  IMG_1556:
+    file: "IMG_1556.MOV"
+    url: "https://drive.google.com/file/d/1Ko_iG_jW-eF3aX8xf-cvqhTFmNtceOSE/view?usp=drive_link"
+    t_start: 2
+    t_end: 30
+```
+
+### 2. Targeted Snakemake Commands for One Video / One Frame
+
+```bash
+# Step A: Download only IMG_1556.MOV and superfotograma.png
+uv run snakemake media/raw/videos/IMG_1556.MOV media/raw/images/superfotograma.png --cores 2
+
+# Step B: Extract trimmed greyscale PNGs and manifest for IMG_1556
+uv run snakemake media/frames/IMG_1556.manifest.tsv --cores 1
+
+# Step C: Run detection for a single frame (1 Snakemake job)
+uv run snakemake media/frames/IMG_1556/IMG_1556_f000120_t2.0013.txt --cores 1
+```
+
+### 3. Artifacts & Illustrative File Contents
+
+| Step / Rule | Generated Artifact | Illustrative Content / Purpose |
+|---|---|---|
+| `download_video` | `media/raw/videos/IMG_1556.MOV` | Raw 1080p video (~59.96 fps) downloaded from Drive |
+| `download_image` | `media/raw/images/superfotograma.png` | Shared static background image for subtraction |
+| `extract_frames` | `media/frames/IMG_1556/IMG_1556_f000120_t2.0013.png` | 8-bit greyscale PNG for frame index `120` at PTS `2.0013 s` |
+| `extract_frames` | `media/frames/IMG_1556.manifest.tsv` | Index of all extracted frames for `IMG_1556` (see below) |
+| `detect_frame` | `media/frames/IMG_1556/IMG_1556_f000120_t2.0013.txt` | Single CSV row without header (see below) |
+| `aggregate_csv` | `results/trajectories.csv` | Sorted table combining all `.txt` rows across active videos |
+| Logs & Benchmarks | `logs/detect_frame/IMG_1556/IMG_1556_f000120_t2.0013.log`<br/>`benchmarks/detect_frame/IMG_1556/IMG_1556_f000120_t2.0013.tsv` | Per-job execution log and Snakemake runtime/memory metrics |
+
+**Illustrative `media/frames/IMG_1556.manifest.tsv`** (tab-separated):
+
+```tsv
+video_name	frame_index	t_sec	stem	png_path
+IMG_1556	120	2.0013	IMG_1556_f000120_t2.0013	media/frames/IMG_1556/IMG_1556_f000120_t2.0013.png
+IMG_1556	121	2.0180	IMG_1556_f000121_t2.0180	media/frames/IMG_1556/IMG_1556_f000121_t2.0180.png
+IMG_1556	122	2.0347	IMG_1556_f000122_t2.0347	media/frames/IMG_1556/IMG_1556_f000122_t2.0347.png
+```
+
+**Illustrative `media/frames/IMG_1556/IMG_1556_f000120_t2.0013.txt`** (1 row, no header):
+
+```text
+IMG_1556,2.0013,812.400000,503.100000
+```
+
+**Illustrative `results/trajectories.csv`** (showing a normal detection and an undetected `nan` frame):
+
+```csv
+video_name,t,x,y
+IMG_1556,2.001300,812.400000,503.100000
+IMG_1556,2.018000,814.125000,504.375000
+IMG_1556,2.034700,nan,nan
+```
+
+---
+
+## Frame Naming & Incremental Re-Runs
+
+Every extracted frame uses the stem `{video}_f{index:06d}_t{seconds:.4f}`:
+
+- **`{video}`**: Key from `videos:` in `config.yaml` (e.g., `IMG_1556`).
+- **`f{index:06d}`**: Zero-padded 0-based frame counter in the original video stream (unchanged when `t_start` changes).
+- **`t{seconds:.4f}`**: Container presentation timestamp (PTS) in seconds to 4 decimal places (falls back to `index / fps` only if PTS is absent).
+
+Because frame filenames encode the original index and timestamp, Snakemake handles config edits incrementally:
+
+| Change in `config.yaml` | What Snakemake Re-Runs |
+|---|---|
+| Expand `[t_start, t_end)` on `IMG_1556` | Re-runs `extract_frames` for `IMG_1556`, then runs `detect_frame` **only** for newly added frames |
+| Adjust `threshold_low`, `threshold_high`, or `morphology_disk_radius` | Re-runs `detect_frame` and `aggregate_csv` using existing PNGs (no video re-download or re-decoding) |
+| Comment out a video under `videos:` | Excludes that video from `aggregate_csv` without touching remaining videos |
+
+---
+
+## Troubleshooting & Operational Notes
+
+- **Interrupted run lock (`LockException`)**: If a Snakemake execution is interrupted (`Ctrl+C`), clear the directory lock before retrying:
+  ```bash
+  uv run snakemake --unlock
+  ```
+- **Google Drive rate limiting during downloads**: All 15 `download_video` rules can run concurrently. If Google Drive throttles parallel requests, download with capped concurrency first (`uv run snakemake -j 2 --until download_video download_image`), then run `uv run snakemake --cores all` for frame extraction and detection.
+- **Disk footprint & job scale**: Greyscale 1080p PNGs take roughly 0.5–1 MB per frame (~1,800 frames per 30 s video at 59.96 fps), and `detect_frame` schedules 1 job per frame. Validate trim bounds on a single video before enabling all 15.
+- **Undetected frames (`nan,nan`)**: When no connected component passes the threshold window `(threshold_low, threshold_high)`, `compute_bob_centroid` writes `nan,nan` instead of guessing; downstream `labo13.physics` functions drop `NaN` rows explicitly.
+
+---
+
 ## Configuration (`config.yaml`)
 
 All experimental paths, detection thresholds, and per-video trim intervals are controlled exclusively through `config.yaml` (validated at startup against `workflow/schemas/config.schema.yaml`):
