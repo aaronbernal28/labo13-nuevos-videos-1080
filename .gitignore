@@ -28,3 +28,6 @@ build/
 # Secrets & local environment variables
 .env
 *.secret
+
+# Local plan documents
+docs/
