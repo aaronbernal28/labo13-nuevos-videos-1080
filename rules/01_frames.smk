@@ -14,6 +14,7 @@ checkpoint extract_frames:
 	params:
 		t_start = get_video_t_start,
 		t_end = get_video_t_end,
+		fps = config["parameters"]["fps"],
 		batch_size = config["parameters"]["frame_batch_size"],
 		compress_level = config["parameters"]["png_compress_level"]
 	threads: 4
