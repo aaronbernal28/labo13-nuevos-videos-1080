@@ -13,8 +13,10 @@ checkpoint extract_frames:
 		f"{config['paths']['benchmarks_dir']}/extract_frames/{{video}}.tsv"
 	params:
 		t_start = get_video_t_start,
-		t_end = get_video_t_end
-	threads: 1
+		t_end = get_video_t_end,
+		batch_size = config["parameters"]["frame_batch_size"],
+		compress_level = config["parameters"]["png_compress_level"]
+	threads: 4
 	resources:
 		mem_mb = 2000
 	conda:
