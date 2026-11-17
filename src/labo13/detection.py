@@ -32,7 +32,7 @@ def compute_bob_centroid(
 	threshold_high: float = 200.0,
 	disk_radius: int = 2,
 ) -> PixelCentroid:
-	"""Compute bob centroid (x_px, y_px) in pixel coordinates or (nan, nan)."""
+	"""Compute bob centroid (x_px, y_px) rounded to integer pixels or (nan, nan)."""
 	mask: npt.NDArray[np.bool_] = _build_foreground_mask(
 		frame_gray=frame_gray,
 		background_gray=background_gray,
@@ -49,4 +49,4 @@ def compute_bob_centroid(
 	y_center: float
 	x_center: float
 	y_center, x_center = largest_region.centroid
-	return (float(x_center), float(y_center))
+	return (float(round(x_center)), float(round(y_center)))

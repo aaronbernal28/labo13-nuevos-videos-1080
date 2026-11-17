@@ -16,8 +16,10 @@ def test_compute_bob_centroid_synthetic_disk() -> None:
 	x_px: float
 	y_px: float
 	x_px, y_px = compute_bob_centroid(frame, bg, 100.0, 200.0, 2)
-	assert abs(x_px - 70.0) < 0.5
-	assert abs(y_px - 40.0) < 0.5
+	assert x_px == 70.0
+	assert y_px == 40.0
+	assert x_px.is_integer()
+	assert y_px.is_integer()
 
 
 def test_compute_bob_centroid_empty_returns_nan() -> None:

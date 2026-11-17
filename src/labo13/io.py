@@ -1,9 +1,17 @@
+import math
 from pathlib import Path
 
 import gdown
 import pandas as pd
 
 from labo13.types import FrameRecord
+
+
+def _format_pixel_coord(value: float) -> str:
+	"""Format a pixel coordinate as a rounded integer string or 'nan'."""
+	if math.isnan(value):
+		return "nan"
+	return str(int(round(value)))
 
 
 def download_drive_file(url: str, output_path: Path) -> Path:
@@ -76,9 +84,11 @@ def save_frame_detection_row(
 	y_px: float,
 	output_txt: Path,
 ) -> None:
-	"""Save a single CSV row 'video_name,t,x,y' (no header) to a per-frame .txt file."""
+	"""Save a single CSV row 'video_name,t,x,y' (integer pixels, no header) to .txt."""
 	output_txt.parent.mkdir(parents=True, exist_ok=True)
-	line: str = f"{video_name},{t_sec:.4f},{x_px:.6f},{y_px:.6f}\n"
+	x_str: str = _format_pixel_coord(x_px)
+	y_str: str = _format_pixel_coord(y_px)
+	line: str = f"{video_name},{t_sec:.4f},{x_str},{y_str}\n"
 	output_txt.write_text(line, encoding="utf-8")
 
 
@@ -106,10 +116,12 @@ def build_trajectories_dataframe(txt_paths: list[Path]) -> pd.DataFrame:
 	df_sorted: pd.DataFrame = df_traj.sort_values(
 		by=["video_name", "t"], ascending=[True, True], kind="mergesort"
 	).reset_index(drop=True)
+	df_sorted["x"] = df_sorted["x"].round().astype("Int64")
+	df_sorted["y"] = df_sorted["y"].round().astype("Int64")
 	return df_sorted
 
 
 def export_trajectories_csv(df_traj: pd.DataFrame, output_csv: Path) -> None:
-	"""Write the aggregated trajectories DataFrame to disk."""
+	"""Write the aggregated trajectories DataFrame to disk with integer pixel coords."""
 	output_csv.parent.mkdir(parents=True, exist_ok=True)
-	df_traj.to_csv(output_csv, index=False, float_format="%.6f")
+	df_traj.to_csv(output_csv, index=False, float_format="%.4f", na_rep="nan")
