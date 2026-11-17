@@ -41,3 +41,15 @@ def collect_detected_frame_txts(wildcards) -> list[str]:
 		for stem in df_manifest["stem"].astype(str):
 			txt_files.append(f"{frames_root}/{video}/{stem}.txt")
 	return txt_files
+
+
+def collect_video_frame_txts(wildcards) -> list[str]:
+	"""Resolve checkpoint manifest to list all per-frame .txt files for a single video."""
+	frames_root: str = config["paths"]["frames_dir"]
+	ckpt_output = checkpoints.extract_frames.get(video=wildcards.video).output
+	manifest_path: Path = Path(ckpt_output.manifest_tsv)
+	df_manifest: pd.DataFrame = pd.read_csv(manifest_path, sep="\t")
+	return [
+		f"{frames_root}/{wildcards.video}/{stem}.txt"
+		for stem in df_manifest["stem"].astype(str)
+	]
