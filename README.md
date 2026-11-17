@@ -275,6 +275,8 @@ All experimental paths, detection thresholds, and per-video trim intervals are c
   - `threshold_low: 100.0` — lower bound on background-subtracted intensity (`background - frame`).
   - `threshold_high: 200.0` — upper bound on background-subtracted intensity.
   - `morphology_disk_radius: 2` — disk radius in pixels for `skimage.morphology.closing`.
+  - `frame_batch_size: 64` — number of decoded frames buffered before parallel PNG disk flush.
+  - `png_compress_level: 1` — lossless PNG zlib compression level (`0` fastest/largest – `9` slowest/smallest).
 
 ---
 
