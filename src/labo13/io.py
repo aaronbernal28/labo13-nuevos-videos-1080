@@ -9,14 +9,15 @@ from labo13.types import FrameRecord
 def download_drive_file(url: str, output_path: Path) -> Path:
 	"""Download a single file from a Google Drive sharing link to output_path."""
 	output_path.parent.mkdir(parents=True, exist_ok=True)
-	downloaded: str | None = gdown.download(
+	downloaded: object = gdown.download(
 		url=url,
 		output=str(output_path),
 		quiet=False,
-		fuzzy=True,
 	)
 	if downloaded is None or not output_path.exists():
-		raise RuntimeError(f"Failed to download Google Drive file from {url} to {output_path}")
+		raise RuntimeError(
+			f"Failed to download Google Drive file from {url} to {output_path}"
+		)
 	return output_path
 
 
@@ -56,7 +57,7 @@ def load_frame_manifest(manifest_path: Path) -> pd.DataFrame:
 
 
 def parse_stem_metadata(stem: str) -> tuple[str, int, float]:
-	"""Extract (video_name, frame_index, t_sec) from '{video}_f{index:06d}_t{seconds:.4f}'."""
+	"""Extract (video_name, frame_index, t_sec) from a frame filename stem."""
 	prefix_part: str
 	t_part: str
 	prefix_part, t_part = stem.rsplit("_t", maxsplit=1)
@@ -97,8 +98,10 @@ def load_frame_detection_row(input_txt: Path) -> dict[str, str | float]:
 
 
 def build_trajectories_dataframe(txt_paths: list[Path]) -> pd.DataFrame:
-	"""Aggregate all per-frame .txt files into a sorted DataFrame (video_name, t, x, y)."""
-	records: list[dict[str, str | float]] = [load_frame_detection_row(path) for path in txt_paths]
+	"""Aggregate per-frame .txt files into a sorted DataFrame (video_name, t, x, y)."""
+	records: list[dict[str, str | float]] = [
+		load_frame_detection_row(path) for path in txt_paths
+	]
 	df_traj: pd.DataFrame = pd.DataFrame(records, columns=["video_name", "t", "x", "y"])
 	df_sorted: pd.DataFrame = df_traj.sort_values(
 		by=["video_name", "t"], ascending=[True, True], kind="mergesort"

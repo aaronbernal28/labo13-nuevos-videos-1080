@@ -16,7 +16,7 @@ def _damped_harmonic_model(
 	phi: float,
 	offset: float,
 ) -> npt.NDArray[np.float64]:
-	"""Evaluate damped harmonic angle model A * exp(-gamma * t) * cos(omega * t + phi) + offset."""
+	"""Evaluate damped harmonic angle model."""
 	result: npt.NDArray[np.float64] = (
 		amplitude * np.exp(-gamma * t) * np.cos(omega * t + phi) + offset
 	)
@@ -44,7 +44,7 @@ def compute_polar_trajectory(
 	sigma_x_px: float = 0.5,
 	sigma_y_px: float = 0.5,
 ) -> pd.DataFrame:
-	"""Convert Cartesian pixel coordinates (x, y) to polar angle theta(t) with uncertainties."""
+	"""Convert Cartesian pixel coordinates (x, y) to polar angle theta(t)."""
 	df_polar: pd.DataFrame = df_xy.dropna(subset=["t", "x", "y"]).copy()
 
 	k_m_px: float = d_real_m / d_px
@@ -61,7 +61,7 @@ def compute_polar_trajectory(
 	length_eff_m: float = constants.length_cm_m
 	x_m: pd.Series = dx_px * k_m_px
 	y_m: pd.Series = length_eff_m - (dy_px * k_m_px)
-	r_m: pd.Series = np.sqrt(x_m**2 + y_m**2)
+	r_m: pd.Series = (x_m**2 + y_m**2).pow(0.5)
 
 	df_polar["X_m"] = x_m
 	df_polar["Y_m"] = y_m
@@ -78,10 +78,10 @@ def compute_polar_trajectory(
 		(dtheta_dx * sigma_x_stat) ** 2 + (dtheta_dy * sigma_y_stat) ** 2
 	)
 
-	sigma_x_tot: pd.Series = np.sqrt(sigma_x_stat**2 + (dx_px * sigma_k) ** 2)
-	sigma_y_tot: pd.Series = np.sqrt(
+	sigma_x_tot: pd.Series = (sigma_x_stat**2 + (dx_px * sigma_k) ** 2).pow(0.5)
+	sigma_y_tot: pd.Series = (
 		sigma_y_stat**2 + (dy_px * sigma_k) ** 2 + constants.sigma_length_m**2
-	)
+	).pow(0.5)
 	df_polar["sigma_theta_total_rad"] = np.sqrt(
 		(dtheta_dx * sigma_x_tot) ** 2 + (dtheta_dy * sigma_y_tot) ** 2
 	)
@@ -95,13 +95,15 @@ def compute_harmonic_fit(
 	video_name: str = "Experiment",
 	damped: bool = True,
 ) -> HarmonicFitResult:
-	"""Perform 2-stage weighted harmonic curve_fit with shutter time-variance propagation."""
+	"""Perform 2-stage weighted harmonic fit with time-variance propagation."""
 	df_fit: pd.DataFrame = df_polar.dropna(
 		subset=["t", "theta_rad", "sigma_theta_stat_rad"]
 	).copy()
 	t_data: npt.NDArray[np.float64] = df_fit["t"].to_numpy(dtype=np.float64)
 	y_data: npt.NDArray[np.float64] = df_fit["theta_rad"].to_numpy(dtype=np.float64)
-	y_err_stat: npt.NDArray[np.float64] = df_fit["sigma_theta_stat_rad"].to_numpy(dtype=np.float64)
+	y_err_stat: npt.NDArray[np.float64] = df_fit["sigma_theta_stat_rad"].to_numpy(
+		dtype=np.float64
+	)
 
 	amp_init: float = 0.5 * float(y_data.max() - y_data.min())
 	omega_init: float = float(np.sqrt(9.8 / constants.length_cm_m))
@@ -124,7 +126,9 @@ def compute_harmonic_fit(
 		dtheta_dt: npt.NDArray[np.float64] = (
 			-a1 * np.exp(-g1 * t_data) * w1 * np.sin(w1 * t_data + p1)
 		)
-		y_err_ef: npt.NDArray[np.float64] = np.sqrt(y_err_stat**2 + (dtheta_dt * sigma_t_ef) ** 2)
+		y_err_ef: npt.NDArray[np.float64] = np.sqrt(
+			y_err_stat**2 + (dtheta_dt * sigma_t_ef) ** 2
+		)
 		popt, pcov = curve_fit(
 			_damped_harmonic_model,
 			t_data,
@@ -168,7 +172,9 @@ def compute_harmonic_fit(
 		amp_fit, omega_fit, phi_fit, offset_fit = [float(v) for v in popt]
 		s_amp, s_omega, s_phi, s_offset = [float(v) for v in perr]
 		gamma_fit, s_gamma = 0.0, 0.0
-		y_pred = _undamped_harmonic_model(t_data, amp_fit, omega_fit, phi_fit, offset_fit)
+		y_pred = _undamped_harmonic_model(
+			t_data, amp_fit, omega_fit, phi_fit, offset_fit
+		)
 		n_params = 4
 
 	if amp_fit < 0.0:
@@ -192,7 +198,10 @@ def compute_harmonic_fit(
 	length_cm: float = constants.length_cm_m
 	g_cm: float = length_cm * (omega0**2)
 	sigma_g_cm: float = g_cm * float(
-		np.sqrt((constants.sigma_length_m / length_cm) ** 2 + (2.0 * sigma_omega0 / omega0) ** 2)
+		np.sqrt(
+			(constants.sigma_length_m / length_cm) ** 2
+			+ (2.0 * sigma_omega0 / omega0) ** 2
+		)
 	)
 
 	return HarmonicFitResult(
@@ -228,7 +237,7 @@ def compute_sliding_window_periods(
 	window_sec: float = 6.0,
 	step_sec: float = 2.0,
 ) -> pd.DataFrame:
-	"""Evaluate local period T(theta_0) across sliding time windows of a decaying oscillation."""
+	"""Evaluate local period T(theta_0) across sliding oscillation time windows."""
 	df_clean: pd.DataFrame = df_polar.dropna(
 		subset=["t", "theta_rad", "sigma_theta_stat_rad"]
 	).copy()
@@ -275,7 +284,7 @@ def compute_ode_trajectory(
 	parameters: tuple[float, float, float, float],
 	model: str = "seno",
 ) -> npt.NDArray[np.float64]:
-	"""Integrate linear ('lineal') or nonlinear ('seno') damped pendulum ODE starting at t=0."""
+	"""Integrate linear or nonlinear damped pendulum ODE starting at t=0."""
 	theta_i, v_i, gamma, offset = parameters
 	t_arr: npt.NDArray[np.float64] = np.asarray(t, dtype=np.float64)
 	if model not in ("lineal", "seno"):
@@ -298,5 +307,7 @@ def compute_ode_trajectory(
 	)
 	if not sol.success or sol.y.shape[1] != len(t_arr):
 		raise RuntimeError(f"ODE integration failed: {sol.message}")
-	trajectory: npt.NDArray[np.float64] = np.asarray(sol.y[0], dtype=np.float64) + offset
+	trajectory: npt.NDArray[np.float64] = (
+		np.asarray(sol.y[0], dtype=np.float64) + offset
+	)
 	return trajectory

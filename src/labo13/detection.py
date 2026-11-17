@@ -13,11 +13,13 @@ def _build_foreground_mask(
 	threshold_high: float,
 	disk_radius: int,
 ) -> npt.NDArray[np.bool_]:
-	"""Subtract background, threshold intensity difference, and apply morphological closing."""
-	diff_image: npt.NDArray[np.float64] = background_gray.astype(np.float64) - frame_gray.astype(
+	"""Subtract background, threshold difference, and apply morphological closing."""
+	diff_image: npt.NDArray[np.float64] = background_gray.astype(
 		np.float64
+	) - frame_gray.astype(np.float64)
+	raw_mask: npt.NDArray[np.bool_] = (diff_image > threshold_low) & (
+		diff_image < threshold_high
 	)
-	raw_mask: npt.NDArray[np.bool_] = (diff_image > threshold_low) & (diff_image < threshold_high)
 	footprint: npt.NDArray[np.uint8] = skimage.morphology.disk(disk_radius)
 	closed_mask: npt.NDArray[np.bool_] = skimage.morphology.closing(raw_mask, footprint)
 	return closed_mask
@@ -30,7 +32,7 @@ def compute_bob_centroid(
 	threshold_high: float = 200.0,
 	disk_radius: int = 2,
 ) -> PixelCentroid:
-	"""Compute bob centroid (x_px, y_px) in image coordinates (origin top-left) or (nan, nan)."""
+	"""Compute bob centroid (x_px, y_px) in pixel coordinates or (nan, nan)."""
 	mask: npt.NDArray[np.bool_] = _build_foreground_mask(
 		frame_gray=frame_gray,
 		background_gray=background_gray,
