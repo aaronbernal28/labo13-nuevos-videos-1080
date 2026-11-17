@@ -1,88 +1,101 @@
-# LABO 13 — Simple pendulum: nonlinear behavior at large angles (1080p videos)
+# LABO 13 — Simple Pendulum Nonlinear Behavior at Large Angles (1080p)
 
-Video tracking of a simple pendulum to study how well the **small-angle (sinusoidal) approximation** holds as the oscillation amplitude grows.
+Reproducible 3-tier **Python + Snakemake** workflow for tracking a simple pendulum across 1080p videos and evaluating the breakdown of the small-angle sinusoidal approximation as amplitude increases.
 
-## Links
+---
+
+## Links & Data Sources
 
 | Resource | Link |
 |---|---|
-| Original Colab notebook (source of this repo) | https://colab.research.google.com/drive/1covVbCOVzjUw5jkBTUUZ00v053icBWpg?usp=sharing |
-| Simple reference Colab (style example) | https://drive.google.com/file/d/1qCTrCMC7AzwTvXsJM8Y7XEThvcKkU-Gj/view?usp=sharing |
-| Raw videos (Google Drive folder) | https://drive.google.com/drive/folders/10VmY2TRLvBIaaMNBjxqX4qjdgOwvmTSv?usp=sharing |
+| Original Colab notebook | https://colab.research.google.com/drive/1covVbCOVzjUw5jkBTUUZ00v053icBWpg?usp=sharing |
+| Reference Colab example | https://drive.google.com/file/d/1qCTrCMC7AzwTvXsJM8Y7XEThvcKkU-Gj/view?usp=sharing |
+| Raw videos & images (Google Drive) | https://drive.google.com/drive/folders/10VmY2TRLvBIaaMNBjxqX4qjdgOwvmTSv?usp=sharing |
 
-## Repository contents
+---
 
-| File | Description |
-|---|---|
-| `Copia de [LABO 13] Nuevos Videos 1080.ipynb` | Original Colab notebook, committed **unmodified** as a baseline to be cleaned. |
-| `README.md` | This file. |
+## Project Layout
 
-## Experimental setup (from the original notebook)
-
-| Quantity | Value | Uncertainty |
-|---|---|---|
-| Pendulum length without base | 0.737 m | ±0.005 m |
-| Pendulum length with base | 0.778 m | ±0.005 m |
-| Pendulum width | 3.0 mm | ±0.2 mm (caliper) |
-| Frame period | 1/59.96 s (~60 fps) | ±1 frame |
-
-- Videos: `.MOV`, 1080p, recorded with a fixed camera.
-- A background frame (a frame without the pendulum, or a median frame) is used for background subtraction.
-
-## Objectives
-
-### Stage 1 — Build a single tidy trajectory table (current goal)
-
-Produce **one CSV** containing the bob position for every frame of every video:
-
+```text
+labo13-nuevos-videos-1080/
+├── Snakefile                              ← Pipeline orchestration, schema validation & target rules
+├── config.yaml                            ← Central parameters, per-file Drive URLs & video trim bounds
+├── pyproject.toml                         ← PEP 621 package metadata, dependencies & mypy config
+├── ruff.toml                              ← Ruff linter/formatter config (tab indentation, snakemake builtin)
+├── .env.example                           ← Template for optional environment variables (never commit .env)
+├── .gitignore                             ← Ignores media/, .snakemake/, .venv/, .env, checkpoints
+├── README.md                              ← Project overview, ASCII tree, setup & Snakemake commands
+├── docs/
+│   ├── workflow_plan.md                   ← Initial interview summary plan
+│   └── workflow_plan_bis.md               ← Extended convention-compliant implementation plan
+├── workflow/
+│   └── schemas/
+│       └── config.schema.yaml             ← JSON Schema Draft 2020-12 validating config.yaml
+├── rules/                                 ← Tier 3: Modular Snakemake rule definitions (*.smk)
+│   ├── 00_download.smk                    ← Parallel rules download_video & download_image (gdown)
+│   ├── 01_frames.smk                      ← Checkpoint extract_frames (grey PNGs + manifest TSV)
+│   ├── 02_detect.smk                      ← Rule detect_frame (parallel 1-job-per-frame centroid TXT)
+│   └── 03_aggregate.smk                   ← Rule aggregate_csv (checkpoint aggregation into CSV)
+├── scripts/                               ← Tier 2: Thin Snakemake adapter scripts (*.py)
+│   ├── download_file.py                   ← Unpacks snakemake -> labo13.io.download_drive_file
+│   ├── extract_frames.py                  ← Unpacks snakemake -> labo13.video.extract_trimmed_frames_gray
+│   ├── detect_frame.py                    ← Unpacks snakemake -> labo13.detection.compute_bob_centroid
+│   └── aggregate_csv.py                   ← Unpacks snakemake -> labo13.io.build_trajectories_dataframe
+├── src/                                   ← Tier 1: Pure modular domain library (zero Snakemake coupling)
+│   └── labo13/
+│       ├── __init__.py                    ← Package exports and version
+│       ├── types.py                       ← Dataclasses (FrameRecord, PendulumConstants) & type aliases
+│       ├── io.py                          ← Per-file Drive download, manifest TSV & TXT/CSV I/O
+│       ├── video.py                       ← PyAV decoding, PTS time trimming & greyscale frame I/O
+│       ├── detection.py                   ← Foreground segmentation & centroid extraction
+│       └── physics.py                     ← Cartesian-to-polar error propagation, harmonic & ODE fits
+├── tests/                                 ← Unit tests independent of Snakemake (pytest)
+│   ├── test_io.py                         ← Tests TXT row formatting/parsing & CSV sorting
+│   ├── test_video.py                      ← Tests integer-second trim predicates & filename formatting
+│   └── test_detection.py                  ← Tests synthetic circle centroid & NaN fallback on empty frame
+├── notebooks/
+│   └── original/
+│       └── Copia de [LABO 13] Nuevos Videos 1080.ipynb ← Original unmodified Colab notebook
+├── media/                                 ← Gitignored raw media and intermediate frame artifacts
+│   ├── raw/
+│   │   ├── videos/                        ← Downloaded {video}.MOV files (IMG_1555..IMG_1569)
+│   │   └── images/                        ← Downloaded background image (superfotograma.png)
+│   └── frames/
+│       └── {video}/                       ← {video}_f{index:06d}_t{seconds:.4f}.{png,txt}
+└── results/
+    └── trajectories.csv                   ← Final tidy table: video_name,t,x,y
 ```
-video_name,t,x,y
-IMG_1555.MOV,0.000000,812.4,503.1
-IMG_1555.MOV,0.016678,813.0,505.7
-...
+
+---
+
+## Environment Setup
+
+```bash
+uv venv .venv
+source .venv/bin/activate
+uv pip install -e ".[dev]"
 ```
 
-| Column | Type | Meaning |
-|---|---|---|
-| `video_name` | str | Video file name (identifies the run / amplitude). |
-| `t` | float, s | Time since the first analyzed frame (`frame_index / fps`). |
-| `x` | float | Horizontal bob-centroid position. |
-| `y` | float | Vertical bob-centroid position. |
+---
 
-**Requirements**
-- Long (tidy) format: one row per (video, frame).
-- `t` comes from the real video frame rate (≈59.96 fps), not an assumed 60.
-- Frames where the bob is not detected are left out or set to `NaN` (never filled with a guess).
-- Coordinates and units must be documented (pixels with image origin top-left, or meters after calibration). Keep this consistent across all videos.
-- The whole table must be reproducible from the raw videos with one command / one notebook run.
+## Library Quick-Start
 
-> The **detection method** (background subtraction, thresholding, morphology, centroid, etc.) is to be defined by the author. This README only fixes the problem and the output format.
+```python
+import labo13 as l13
 
-### Stage 2 — Amplitude-dependence analysis (final goal)
+frame = l13.load_image_gray("media/frames/IMG_1556/IMG_1556_f000000_t0.0000.png")
+x_px, y_px = l13.compute_bob_centroid(frame, l13.load_image_gray("media/raw/images/superfotograma.png"))
+```
 
-Using the CSV, for each video:
+---
 
-1. Find the pivot point and convert `(x, y)` → angle `θ(t)`.
-2. Fit two models to `θ(t)`:
-   - **Linear (small-angle):** $\ddot\theta + \gamma\dot\theta + \omega_0^2\,\theta = 0$ → damped sinusoid.
-   - **Nonlinear:** $\ddot\theta + \gamma\dot\theta + \omega_0^2\,\sin\theta = 0$ (numerical integration).
-3. Compare both fits (residuals, χ², estimated `g`, period).
+## Pipeline Execution
 
-Expected result: **the larger the initial amplitude θ₀, the worse the sinusoidal approximation**, observable as:
-- growing residuals / χ² of the linear model compared to the nonlinear one;
-- period growing with amplitude, approximately
+```bash
+# Validate workflow linting and inspect dry-run DAG
+uv run snakemake --lint
+uv run snakemake -n
 
-$$T(\theta_0) \approx T_0\left(1 + \frac{\theta_0^2}{16} + \frac{11\,\theta_0^4}{3072} + \dots\right),\qquad T_0 = 2\pi\sqrt{L/g}.$$
-
-Deliverables: a table per video (θ₀, T, g, χ² of each model) and plots of T vs θ₀ and residuals vs θ₀.
-
-## Roadmap
-
-- [x] Import the original notebook unmodified.
-- [ ] Clean the notebook (remove duplicated cells, Colab-only bits, dead code).
-- [ ] Stage 1: generate `trajectories.csv` (`video_name, t, x, y`).
-- [ ] Stage 2: angle conversion, linear vs nonlinear fits, amplitude analysis.
-
-## Getting the data
-
-Download the videos from the Drive folder above into a local `videos/` directory (not tracked by git).
+# Execute pipeline across all CPU cores
+uv run snakemake --cores all
+```
