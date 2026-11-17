@@ -38,7 +38,7 @@ images:
 
 # Oscillation videos from Google Drive (downloaded in parallel).
 # Comment out any video entry to skip it.
-# Set t_start / t_end (integer seconds) to trim manually; null means untrimmed.
+# Set t_start / t_end (integer seconds) to trim manually; null means untrimmed (inf).
 videos:
   IMG_1555:
     file: "IMG_1555.MOV"
@@ -48,8 +48,8 @@ videos:
   IMG_1556:
     file: "IMG_1556.MOV"
     url: "https://drive.google.com/file/d/1Ko_iG_jW-eF3aX8xf-cvqhTFmNtceOSE/view?usp=drive_link"
-    t_start: null
-    t_end: null
+    t_start: 2
+    t_end: 19
   IMG_1557:
     file: "IMG_1557.MOV"
     url: "https://drive.google.com/file/d/1sPhB7ZXdDpAlu3-gkL8NMXjqvmiCZ4vf/view?usp=drive_link"
@@ -63,7 +63,7 @@ videos:
   IMG_1559:
     file: "IMG_1559.MOV"
     url: "https://drive.google.com/file/d/1fAx-53cf7GMUyZbGZRhvdtlIEtoU0MX4/view?usp=drive_link"
-    t_start: null
+    t_start: 2
     t_end: null
   IMG_1560:
     file: "IMG_1560.MOV"
@@ -73,48 +73,48 @@ videos:
   IMG_1561:
     file: "IMG_1561.MOV"
     url: "https://drive.google.com/file/d/1dUE8vjWjRxv9dS6A6IIJm2_VQwXDBmzP/view?usp=drive_link"
-    t_start: null
+    t_start: 2
     t_end: null
   IMG_1562:
     file: "IMG_1562.MOV"
     url: "https://drive.google.com/file/d/1FGHw9uC1k9yuTHkOqSoexXQxKgg9-xKz/view?usp=drive_link"
-    t_start: null
+    t_start: 2
     t_end: null
   IMG_1563:
     file: "IMG_1563.MOV"
     url: "https://drive.google.com/file/d/1iFds9fidJmm_7bCraIAWWR6LcJsTDSc0/view?usp=drive_link"
-    t_start: null
+    t_start: 2
     t_end: null
   IMG_1564:
     file: "IMG_1564.MOV"
     url: "https://drive.google.com/file/d/16hDMUF1zdKZSXkKT8pUPPzrGAWTtnlkb/view?usp=drive_link"
-    t_start: null
+    t_start: 2
     t_end: null
   IMG_1565:
     file: "IMG_1565.MOV"
     url: "https://drive.google.com/file/d/16ndBa5GYvaGHjuu1711Ct7iMMoeEpUfh/view?usp=drive_link"
-    t_start: null
+    t_start: 2
     t_end: null
   IMG_1566:
     file: "IMG_1566.MOV"
     url: "https://drive.google.com/file/d/1BJGQhoKvkviezTdvhw1LzXdSv-LoENst/view?usp=drive_link"
-    t_start: null
+    t_start: 2
     t_end: null
   IMG_1567:
     file: "IMG_1567.MOV"
     url: "https://drive.google.com/file/d/1y5dY7WYAW8NgpqkZEfVx2DWa6bo5JgIR/view?usp=drive_link"
-    t_start: null
+    t_start: 1
     t_end: null
   IMG_1568:
     file: "IMG_1568.MOV"
     url: "https://drive.google.com/file/d/1VUcrtZoA1mz7IaMXoH2-2WqOhUlgAti9/view?usp=drive_link"
-    t_start: null
+    t_start: 2
     t_end: null
   IMG_1569:
     file: "IMG_1569.MOV"
     url: "https://drive.google.com/file/d/1eZCqKr-aIibRBEc1iHHBiQ_NOTzZPzUj/view?usp=drive_link"
-    t_start: null
-    t_end: null
+    t_start: 1
+    t_end: 13
   # Measurement evidence only — excluded from tracking pipeline
   # IMG_1570:
   #   file: "IMG_1570.MOV"
