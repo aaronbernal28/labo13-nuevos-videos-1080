@@ -22,6 +22,7 @@ def main() -> None:
 	raw_t_end: int | None = snakemake.params.t_end
 	t_start: int | None = int(raw_t_start) if raw_t_start is not None else None
 	t_end: int | None = int(raw_t_end) if raw_t_end is not None else None
+	target_fps: int = int(snakemake.params.fps)
 	batch_size: int = int(snakemake.params.batch_size)
 	compress_level: int = int(snakemake.params.compress_level)
 	max_workers: int = int(snakemake.threads)
@@ -32,6 +33,7 @@ def main() -> None:
 		output_dir=frames_dir,
 		t_start=t_start,
 		t_end=t_end,
+		target_fps=target_fps,
 		batch_size=batch_size,
 		max_workers=max_workers,
 		compress_level=compress_level,
