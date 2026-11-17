@@ -5,7 +5,7 @@
 Build a reproducible, strictly typed, 3-tier **Python + Snakemake** pipeline in `/home/aaron/bs/labo13-nuevos-videos-1080` that adheres to `python-snakemake-conventions`:
 
 1. **Stage 1 (Snakemake Pipeline — Parallel File Download $\to$ Greyscale Frames $\to$ Per-Frame Centroid TXT $\to$ `results/trajectories.csv`)**:
-   - Download the 16 raw 1080p `.MOV` videos (`IMG_1555.MOV`–`IMG_1570.MOV`) and 6 reference/background images **in parallel** (one Snakemake job per file) directly from their individual Google Drive URLs configured in `config.yaml`.
+   - Download the 15 active 1080p oscillation `.MOV` videos (`IMG_1555.MOV`–`IMG_1569.MOV`; `IMG_1570.MOV` is measurement evidence and excluded) and the shared background image (`superfotograma.png`) **in parallel** (one Snakemake job per file) directly from their individual Google Drive URLs configured in `config.yaml`.
    - Decode each enabled video in `config.yaml`, filter frames by manual integer-second trims (`t_start`, `t_end`, default `null` = untrimmed) using the real container PTS timestamp, convert to 8-bit greyscale, and save each frame as `media/frames/{video}/{video}_f{index:06d}_t{seconds:.4f}.png` via a Snakemake `checkpoint`.
    - Run **one independent Snakemake job per frame** producing `media/frames/{video}/{video}_f{index:06d}_t{seconds:.4f}.txt` containing a single CSV line `video_name,t,x,y` (pixel coordinates, origin top-left, original video timestamp `t`).
    - Aggregate all per-frame `.txt` rows into `results/trajectories.csv` (`video_name,t,x,y`), sorted deterministically by `(video_name, t)`.
@@ -16,37 +16,37 @@ Build a reproducible, strictly typed, 3-tier **Python + Snakemake** pipeline in 
 
 ## Extracted Google Drive Files Inventory (22 Links)
 
-### Videos (16 `.MOV` Files)
+### Videos (16 `.MOV` Files — 15 Active, 1 Measurement Evidence)
 
-| Config Key | Original Drive Filename | Local Path (`media/raw/videos/`) | Google Drive URL |
-|---|---|---|---|
-| `IMG_1555` | `Copia de IMG_1555.MOV` | `media/raw/videos/IMG_1555.MOV` | https://drive.google.com/file/d/1yiYkiyyFnH82KI7UQBh_dGtKFII0p76R/view?usp=drive_link |
-| `IMG_1556` | `Copia de IMG_1556.MOV` | `media/raw/videos/IMG_1556.MOV` | https://drive.google.com/file/d/1Ko_iG_jW-eF3aX8xf-cvqhTFmNtceOSE/view?usp=drive_link |
-| `IMG_1557` | `Copia de IMG_1557.MOV` | `media/raw/videos/IMG_1557.MOV` | https://drive.google.com/file/d/1sPhB7ZXdDpAlu3-gkL8NMXjqvmiCZ4vf/view?usp=drive_link |
-| `IMG_1558` | `Copia de IMG_1558.MOV` | `media/raw/videos/IMG_1558.MOV` | https://drive.google.com/file/d/11EvlSCqtED3f4dqSZ3tcjMYAoBBoI3_D/view?usp=drive_link |
-| `IMG_1559` | `Copia de IMG_1559.MOV` | `media/raw/videos/IMG_1559.MOV` | https://drive.google.com/file/d/1fAx-53cf7GMUyZbGZRhvdtlIEtoU0MX4/view?usp=drive_link |
-| `IMG_1560` | `Copia de IMG_1560.MOV` | `media/raw/videos/IMG_1560.MOV` | https://drive.google.com/file/d/1RynR6hOrd2CehShZ23yNl4LZ0phhWTTo/view?usp=drive_link |
-| `IMG_1561` | `Copia de IMG_1561.MOV` | `media/raw/videos/IMG_1561.MOV` | https://drive.google.com/file/d/1dUE8vjWjRxv9dS6A6IIJm2_VQwXDBmzP/view?usp=drive_link |
-| `IMG_1562` | `Copia de IMG_1562.MOV` | `media/raw/videos/IMG_1562.MOV` | https://drive.google.com/file/d/1FGHw9uC1k9yuTHkOqSoexXQxKgg9-xKz/view?usp=drive_link |
-| `IMG_1563` | `Copia de IMG_1563.MOV` | `media/raw/videos/IMG_1563.MOV` | https://drive.google.com/file/d/1iFds9fidJmm_7bCraIAWWR6LcJsTDSc0/view?usp=drive_link |
-| `IMG_1564` | `Copia de IMG_1564.MOV` | `media/raw/videos/IMG_1564.MOV` | https://drive.google.com/file/d/16hDMUF1zdKZSXkKT8pUPPzrGAWTtnlkb/view?usp=drive_link |
-| `IMG_1565` | `Copia de IMG_1565.MOV` | `media/raw/videos/IMG_1565.MOV` | https://drive.google.com/file/d/16ndBa5GYvaGHjuu1711Ct7iMMoeEpUfh/view?usp=drive_link |
-| `IMG_1566` | `Copia de IMG_1566.MOV` | `media/raw/videos/IMG_1566.MOV` | https://drive.google.com/file/d/1BJGQhoKvkviezTdvhw1LzXdSv-LoENst/view?usp=drive_link |
-| `IMG_1567` | `Copia de IMG_1567.MOV` | `media/raw/videos/IMG_1567.MOV` | https://drive.google.com/file/d/1y5dY7WYAW8NgpqkZEfVx2DWa6bo5JgIR/view?usp=drive_link |
-| `IMG_1568` | `Copia de IMG_1568.MOV` | `media/raw/videos/IMG_1568.MOV` | https://drive.google.com/file/d/1VUcrtZoA1mz7IaMXoH2-2WqOhUlgAti9/view?usp=drive_link |
-| `IMG_1569` | `Copia de IMG_1569.MOV` | `media/raw/videos/IMG_1569.MOV` | https://drive.google.com/file/d/1eZCqKr-aIibRBEc1iHHBiQ_NOTzZPzUj/view?usp=drive_link |
-| `IMG_1570` | `Copia de IMG_1570.MOV` | `media/raw/videos/IMG_1570.MOV` | https://drive.google.com/file/d/1z8ZBpSmhMwIGJEqK9fN1YptAB8TFiFXs/view?usp=drive_link |
+| Config Key | Original Drive Filename | Local Path (`media/raw/videos/`) | Status / Role | Google Drive URL |
+|---|---|---|---|---|
+| `IMG_1555` | `Copia de IMG_1555.MOV` | `media/raw/videos/IMG_1555.MOV` | Active — pendulum oscillation video | https://drive.google.com/file/d/1yiYkiyyFnH82KI7UQBh_dGtKFII0p76R/view?usp=drive_link |
+| `IMG_1556` | `Copia de IMG_1556.MOV` | `media/raw/videos/IMG_1556.MOV` | Active — pendulum oscillation video | https://drive.google.com/file/d/1Ko_iG_jW-eF3aX8xf-cvqhTFmNtceOSE/view?usp=drive_link |
+| `IMG_1557` | `Copia de IMG_1557.MOV` | `media/raw/videos/IMG_1557.MOV` | Active — pendulum oscillation video | https://drive.google.com/file/d/1sPhB7ZXdDpAlu3-gkL8NMXjqvmiCZ4vf/view?usp=drive_link |
+| `IMG_1558` | `Copia de IMG_1558.MOV` | `media/raw/videos/IMG_1558.MOV` | Active — pendulum oscillation video | https://drive.google.com/file/d/11EvlSCqtED3f4dqSZ3tcjMYAoBBoI3_D/view?usp=drive_link |
+| `IMG_1559` | `Copia de IMG_1559.MOV` | `media/raw/videos/IMG_1559.MOV` | Active — pendulum oscillation video | https://drive.google.com/file/d/1fAx-53cf7GMUyZbGZRhvdtlIEtoU0MX4/view?usp=drive_link |
+| `IMG_1560` | `Copia de IMG_1560.MOV` | `media/raw/videos/IMG_1560.MOV` | Active — pendulum oscillation video | https://drive.google.com/file/d/1RynR6hOrd2CehShZ23yNl4LZ0phhWTTo/view?usp=drive_link |
+| `IMG_1561` | `Copia de IMG_1561.MOV` | `media/raw/videos/IMG_1561.MOV` | Active — pendulum oscillation video | https://drive.google.com/file/d/1dUE8vjWjRxv9dS6A6IIJm2_VQwXDBmzP/view?usp=drive_link |
+| `IMG_1562` | `Copia de IMG_1562.MOV` | `media/raw/videos/IMG_1562.MOV` | Active — pendulum oscillation video | https://drive.google.com/file/d/1FGHw9uC1k9yuTHkOqSoexXQxKgg9-xKz/view?usp=drive_link |
+| `IMG_1563` | `Copia de IMG_1563.MOV` | `media/raw/videos/IMG_1563.MOV` | Active — pendulum oscillation video | https://drive.google.com/file/d/1iFds9fidJmm_7bCraIAWWR6LcJsTDSc0/view?usp=drive_link |
+| `IMG_1564` | `Copia de IMG_1564.MOV` | `media/raw/videos/IMG_1564.MOV` | Active — pendulum oscillation video | https://drive.google.com/file/d/16hDMUF1zdKZSXkKT8pUPPzrGAWTtnlkb/view?usp=drive_link |
+| `IMG_1565` | `Copia de IMG_1565.MOV` | `media/raw/videos/IMG_1565.MOV` | Active — pendulum oscillation video | https://drive.google.com/file/d/16ndBa5GYvaGHjuu1711Ct7iMMoeEpUfh/view?usp=drive_link |
+| `IMG_1566` | `Copia de IMG_1566.MOV` | `media/raw/videos/IMG_1566.MOV` | Active — pendulum oscillation video | https://drive.google.com/file/d/1BJGQhoKvkviezTdvhw1LzXdSv-LoENst/view?usp=drive_link |
+| `IMG_1567` | `Copia de IMG_1567.MOV` | `media/raw/videos/IMG_1567.MOV` | Active — pendulum oscillation video | https://drive.google.com/file/d/1y5dY7WYAW8NgpqkZEfVx2DWa6bo5JgIR/view?usp=drive_link |
+| `IMG_1568` | `Copia de IMG_1568.MOV` | `media/raw/videos/IMG_1568.MOV` | Active — pendulum oscillation video | https://drive.google.com/file/d/1VUcrtZoA1mz7IaMXoH2-2WqOhUlgAti9/view?usp=drive_link |
+| `IMG_1569` | `Copia de IMG_1569.MOV` | `media/raw/videos/IMG_1569.MOV` | Active — pendulum oscillation video | https://drive.google.com/file/d/1eZCqKr-aIibRBEc1iHHBiQ_NOTzZPzUj/view?usp=drive_link |
+| `IMG_1570` | `Copia de IMG_1570.MOV` | `media/raw/videos/IMG_1570.MOV` | Excluded (commented in `config.yaml`) — measurement evidence only | https://drive.google.com/file/d/1z8ZBpSmhMwIGJEqK9fN1YptAB8TFiFXs/view?usp=drive_link |
 
-### Images (6 `.png` / `.jpg` Files)
+### Images (6 `.png` / `.jpg` Files — Only `superfotograma` Active)
 
-| Config Key | Original Drive Filename | Local Path (`media/raw/images/`) | Google Drive URL |
-|---|---|---|---|
-| `superfotograma` | `Copia de superfotograma!.png` | `media/raw/images/superfotograma.png` | https://drive.google.com/file/d/1ShYsEFDkAN1E-0kqmVTgIDS4sPruT6MI/view?usp=drive_link |
-| `fotograma_1` | `Copia de fotograma_1.png` | `media/raw/images/fotograma_1.png` | https://drive.google.com/file/d/19to2iFrK9P6G07SkrLwqDtP1ynoblTEo/view?usp=drive_link |
-| `fotograma_100` | `Copia de fotograma_100.png` | `media/raw/images/fotograma_100.png` | https://drive.google.com/file/d/1cmgbnIxMP79ELj2D2KjGHmud2Cm2hPXd/view?usp=drive_link |
-| `fotograma_200` | `Copia de fotograma_200.png` | `media/raw/images/fotograma_200.png` | https://drive.google.com/file/d/1kbLIR8_TYcDvm7I5CpWnNd1bFPHzOj7k/view?usp=drive_link |
-| `primer_fotograma_1` | `Copia de primer_fotograma.jpg` | `media/raw/images/primer_fotograma_1.jpg` | https://drive.google.com/file/d/16lbQAkDNkBsz2YlzmPsu6qO7hV5b7YhL/view?usp=drive_link |
-| `primer_fotograma_2` | `Copia de primer_fotograma.jpg` | `media/raw/images/primer_fotograma_2.jpg` | https://drive.google.com/file/d/1lR-8Q0hvlughHIaEoo5EjQnkANZT3nHN/view?usp=drive_link |
+| Config Key | Original Drive Filename | Local Path (`media/raw/images/`) | Status / Role | Google Drive URL |
+|---|---|---|---|---|
+| `superfotograma` | `Copia de superfotograma!.png` | `media/raw/images/superfotograma.png` | Active — shared background image for subtraction | https://drive.google.com/file/d/1ShYsEFDkAN1E-0kqmVTgIDS4sPruT6MI/view?usp=drive_link |
+| `fotograma_1` | `Copia de fotograma_1.png` | `media/raw/images/fotograma_1.png` | Excluded (commented in `config.yaml`) — unused single-frame snapshot | https://drive.google.com/file/d/19to2iFrK9P6G07SkrLwqDtP1ynoblTEo/view?usp=drive_link |
+| `fotograma_100` | `Copia de fotograma_100.png` | `media/raw/images/fotograma_100.png` | Excluded (commented in `config.yaml`) — unused single-frame snapshot | https://drive.google.com/file/d/1cmgbnIxMP79ELj2D2KjGHmud2Cm2hPXd/view?usp=drive_link |
+| `fotograma_200` | `Copia de fotograma_200.png` | `media/raw/images/fotograma_200.png` | Excluded (commented in `config.yaml`) — unused single-frame snapshot | https://drive.google.com/file/d/1kbLIR8_TYcDvm7I5CpWnNd1bFPHzOj7k/view?usp=drive_link |
+| `primer_fotograma_1` | `Copia de primer_fotograma.jpg` | `media/raw/images/primer_fotograma_1.jpg` | Excluded (commented in `config.yaml`) — unused single-frame snapshot | https://drive.google.com/file/d/16lbQAkDNkBsz2YlzmPsu6qO7hV5b7YhL/view?usp=drive_link |
+| `primer_fotograma_2` | `Copia de primer_fotograma.jpg` | `media/raw/images/primer_fotograma_2.jpg` | Excluded (commented in `config.yaml`) — unused single-frame snapshot | https://drive.google.com/file/d/1lR-8Q0hvlughHIaEoo5EjQnkANZT3nHN/view?usp=drive_link |
 
 > [!NOTE]
 > The Drive folder contains two distinct files both named `Copia de primer_fotograma.jpg` (`16lbQAk...` and `1lR-8Q0...`). In `config.yaml` they are disambiguated as `primer_fotograma_1` and `primer_fotograma_2` so neither overwrites the other during parallel download.
@@ -212,28 +212,29 @@ parameters:
   threshold_high: 200.0
   morphology_disk_radius: 2
 
-# Reference & background images from Google Drive (downloaded in parallel as needed)
+# Reference & background images from Google Drive (only superfotograma used for now)
 images:
   superfotograma:
     file: "superfotograma.png"
     url: "https://drive.google.com/file/d/1ShYsEFDkAN1E-0kqmVTgIDS4sPruT6MI/view?usp=drive_link"
-  fotograma_1:
-    file: "fotograma_1.png"
-    url: "https://drive.google.com/file/d/19to2iFrK9P6G07SkrLwqDtP1ynoblTEo/view?usp=drive_link"
-  fotograma_100:
-    file: "fotograma_100.png"
-    url: "https://drive.google.com/file/d/1cmgbnIxMP79ELj2D2KjGHmud2Cm2hPXd/view?usp=drive_link"
-  fotograma_200:
-    file: "fotograma_200.png"
-    url: "https://drive.google.com/file/d/1kbLIR8_TYcDvm7I5CpWnNd1bFPHzOj7k/view?usp=drive_link"
-  primer_fotograma_1:
-    file: "primer_fotograma_1.jpg"
-    url: "https://drive.google.com/file/d/16lbQAkDNkBsz2YlzmPsu6qO7hV5b7YhL/view?usp=drive_link"
-  primer_fotograma_2:
-    file: "primer_fotograma_2.jpg"
-    url: "https://drive.google.com/file/d/1lR-8Q0hvlughHIaEoo5EjQnkANZT3nHN/view?usp=drive_link"
+  # Unused single-frame snapshots:
+  # fotograma_1:
+  #   file: "fotograma_1.png"
+  #   url: "https://drive.google.com/file/d/19to2iFrK9P6G07SkrLwqDtP1ynoblTEo/view?usp=drive_link"
+  # fotograma_100:
+  #   file: "fotograma_100.png"
+  #   url: "https://drive.google.com/file/d/1cmgbnIxMP79ELj2D2KjGHmud2Cm2hPXd/view?usp=drive_link"
+  # fotograma_200:
+  #   file: "fotograma_200.png"
+  #   url: "https://drive.google.com/file/d/1kbLIR8_TYcDvm7I5CpWnNd1bFPHzOj7k/view?usp=drive_link"
+  # primer_fotograma_1:
+  #   file: "primer_fotograma_1.jpg"
+  #   url: "https://drive.google.com/file/d/16lbQAkDNkBsz2YlzmPsu6qO7hV5b7YhL/view?usp=drive_link"
+  # primer_fotograma_2:
+  #   file: "primer_fotograma_2.jpg"
+  #   url: "https://drive.google.com/file/d/1lR-8Q0hvlughHIaEoo5EjQnkANZT3nHN/view?usp=drive_link"
 
-# All 16 videos from the Google Drive folder (downloaded in parallel).
+# Oscillation videos from Google Drive (downloaded in parallel).
 # Comment out any video entry to skip it.
 # Set t_start / t_end (integer seconds) to trim manually; null means untrimmed.
 videos:
@@ -312,11 +313,12 @@ videos:
     url: "https://drive.google.com/file/d/1eZCqKr-aIibRBEc1iHHBiQ_NOTzZPzUj/view?usp=drive_link"
     t_start: null
     t_end: null
-  IMG_1570:
-    file: "IMG_1570.MOV"
-    url: "https://drive.google.com/file/d/1z8ZBpSmhMwIGJEqK9fN1YptAB8TFiFXs/view?usp=drive_link"
-    t_start: null
-    t_end: null
+  # Measurement evidence only — excluded from tracking pipeline
+  # IMG_1570:
+  #   file: "IMG_1570.MOV"
+  #   url: "https://drive.google.com/file/d/1z8ZBpSmhMwIGJEqK9fN1YptAB8TFiFXs/view?usp=drive_link"
+  #   t_start: null
+  #   t_end: null
 ```
 
 #### [NEW] [config.schema.yaml](file:///home/aaron/bs/labo13-nuevos-videos-1080/workflow/schemas/config.schema.yaml)
