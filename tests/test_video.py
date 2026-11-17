@@ -4,6 +4,7 @@ import av
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+import pytest
 
 from labo13.types import FrameRecord
 from labo13.video import (
@@ -93,3 +94,39 @@ def test_plot_trajectory_on_frame(tmp_path: Path) -> None:
 	)
 	assert out_png.exists()
 	assert out_png.stat().st_size > 0
+
+
+def test_extract_trimmed_frames_gray_subsampled_fps(tmp_path: Path) -> None:
+	video_path: Path = tmp_path / "synthetic6.MOV"
+	with av.open(str(video_path), mode="w") as container:
+		stream = container.add_stream("mpeg4", rate=10)
+		stream.width = 32
+		stream.height = 24
+		stream.pix_fmt = "yuv420p"
+		for idx in range(6):
+			gray: npt.NDArray[np.uint8] = np.full((24, 32), idx * 30, dtype=np.uint8)
+			rgb: npt.NDArray[np.uint8] = np.stack([gray, gray, gray], axis=-1)
+			vframe = av.VideoFrame.from_ndarray(rgb, format="rgb24")
+			for packet in stream.encode(vframe):
+				container.mux(packet)
+		for packet in stream.encode():
+			container.mux(packet)
+
+	out_dir: Path = tmp_path / "frames_30fps"
+	records: list[FrameRecord] = extract_trimmed_frames_gray(
+		video_path=video_path,
+		video_name="SYNTH",
+		output_dir=out_dir,
+		target_fps=30,
+		batch_size=2,
+		max_workers=2,
+	)
+	assert [r.frame_index for r in records] == [0, 2, 4]
+
+	with pytest.raises(ValueError, match="target_fps"):
+		extract_trimmed_frames_gray(
+			video_path=video_path,
+			video_name="SYNTH",
+			output_dir=out_dir,
+			target_fps=61,
+		)

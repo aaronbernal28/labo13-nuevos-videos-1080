@@ -121,6 +121,7 @@ def extract_trimmed_frames_gray(
 	output_dir: Path,
 	t_start: int | None = None,
 	t_end: int | None = None,
+	target_fps: int = 60,
 	batch_size: int = 64,
 	max_workers: int = 4,
 	compress_level: int = 1,
@@ -130,9 +131,12 @@ def extract_trimmed_frames_gray(
 		raise ValueError(
 			f"Invalid trim bounds for {video_name}: t_start={t_start} >= t_end={t_end}"
 		)
+	if not (1 <= target_fps <= 60):
+		raise ValueError(f"target_fps must be in [1, 60], got {target_fps}")
 	if batch_size < 1:
 		raise ValueError(f"batch_size must be >= 1, got {batch_size}")
 
+	frame_step: int = max(1, round(60.0 / float(target_fps)))
 	output_dir.mkdir(parents=True, exist_ok=True)
 	records: list[FrameRecord] = []
 	pending_batch: list[tuple[npt.NDArray[np.uint8], Path]] = []
@@ -150,6 +154,8 @@ def extract_trimmed_frames_gray(
 			if t_end is not None and t_sec >= float(t_end):
 				break
 			if not is_within_time_bounds(t_sec=t_sec, t_start=t_start, t_end=t_end):
+				continue
+			if idx % frame_step != 0:
 				continue
 
 			frame_gray: npt.NDArray[np.uint8] = np.asarray(
