@@ -3,6 +3,7 @@ paths:
   images_dir: "media/raw/images"
   frames_dir: "media/frames"
   trajectories_csv: "results/trajectories.csv"
+  plots_dir: "results/plots"
   logs_dir: "logs"
   benchmarks_dir: "benchmarks"
 

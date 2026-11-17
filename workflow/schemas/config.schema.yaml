@@ -16,6 +16,7 @@ properties:
       - "images_dir"
       - "frames_dir"
       - "trajectories_csv"
+      - "plots_dir"
       - "logs_dir"
       - "benchmarks_dir"
     additionalProperties: false
@@ -27,6 +28,8 @@ properties:
       frames_dir:
         type: "string"
       trajectories_csv:
+        type: "string"
+      plots_dir:
         type: "string"
       logs_dir:
         type: "string"
