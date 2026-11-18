@@ -43,6 +43,7 @@ properties:
       - "threshold_low"
       - "threshold_high"
       - "morphology_disk_radius"
+      - "morphology_opening_disk_radius"
       - "roi_y_start"
       - "roi_y_end"
       - "roi_x_start"
@@ -68,6 +69,9 @@ properties:
       morphology_disk_radius:
         type: "integer"
         minimum: 1
+      morphology_opening_disk_radius:
+        type: "integer"
+        minimum: 0
       roi_y_start:
         type: "integer"
         minimum: 0

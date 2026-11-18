@@ -13,6 +13,7 @@ parameters:
   threshold_low: 20.0
   threshold_high: 255.0
   morphology_disk_radius: 3
+  morphology_opening_disk_radius: 6
   roi_y_start: 1080
   roi_y_end: 2080
   roi_x_start: 0
