@@ -16,6 +16,7 @@ rule detect_frame:
 		threshold_low = config["parameters"]["threshold_low"],
 		threshold_high = config["parameters"]["threshold_high"],
 		disk_radius = config["parameters"]["morphology_disk_radius"],
+		opening_disk_radius = config["parameters"]["morphology_opening_disk_radius"],
 		roi_y_start = config["parameters"]["roi_y_start"],
 		roi_y_end = config["parameters"]["roi_y_end"],
 		roi_x_start = config["parameters"]["roi_x_start"],
