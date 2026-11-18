@@ -43,6 +43,10 @@ properties:
       - "threshold_low"
       - "threshold_high"
       - "morphology_disk_radius"
+      - "roi_y_start"
+      - "roi_y_end"
+      - "roi_x_start"
+      - "roi_x_end"
       - "frame_batch_size"
       - "png_compress_level"
     additionalProperties: false
@@ -62,6 +66,18 @@ properties:
         minimum: 0.0
         maximum: 255.0
       morphology_disk_radius:
+        type: "integer"
+        minimum: 1
+      roi_y_start:
+        type: "integer"
+        minimum: 0
+      roi_y_end:
+        type: "integer"
+        minimum: 1
+      roi_x_start:
+        type: "integer"
+        minimum: 0
+      roi_x_end:
         type: "integer"
         minimum: 1
       frame_batch_size:

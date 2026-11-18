@@ -23,6 +23,10 @@ def main() -> None:
 	threshold_low: float = float(snakemake.params.threshold_low)
 	threshold_high: float = float(snakemake.params.threshold_high)
 	disk_radius: int = int(snakemake.params.disk_radius)
+	roi_y_start: int = int(snakemake.params.roi_y_start)
+	roi_y_end: int = int(snakemake.params.roi_y_end)
+	roi_x_start: int = int(snakemake.params.roi_x_start)
+	roi_x_end: int = int(snakemake.params.roi_x_end)
 
 	video_name: str
 	_frame_index: int
@@ -40,6 +44,10 @@ def main() -> None:
 		threshold_low=threshold_low,
 		threshold_high=threshold_high,
 		disk_radius=disk_radius,
+		roi_y_start=roi_y_start,
+		roi_y_end=roi_y_end,
+		roi_x_start=roi_x_start,
+		roi_x_end=roi_x_end,
 	)
 
 	save_frame_detection_row(
