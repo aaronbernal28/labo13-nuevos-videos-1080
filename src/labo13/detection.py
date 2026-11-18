@@ -12,8 +12,9 @@ def _build_foreground_mask(
 	threshold_low: float,
 	threshold_high: float,
 	disk_radius: int,
+	opening_disk_radius: int = 0,
 ) -> npt.NDArray[np.bool_]:
-	"""Subtract background, threshold difference, and apply morphological closing."""
+	"""Subtract background, threshold, and apply morphological closing/opening."""
 	diff_image: npt.NDArray[np.float64] = background_gray.astype(
 		np.float64
 	) - frame_gray.astype(np.float64)
@@ -22,6 +23,14 @@ def _build_foreground_mask(
 	)
 	footprint: npt.NDArray[np.uint8] = skimage.morphology.disk(disk_radius)
 	closed_mask: npt.NDArray[np.bool_] = skimage.morphology.closing(raw_mask, footprint)
+	if opening_disk_radius > 0:
+		open_footprint: npt.NDArray[np.uint8] = skimage.morphology.disk(
+			opening_disk_radius
+		)
+		opened_mask: npt.NDArray[np.bool_] = skimage.morphology.opening(
+			closed_mask, open_footprint
+		)
+		return opened_mask
 	return closed_mask
 
 
@@ -35,6 +44,7 @@ def compute_bob_centroid(
 	roi_y_end: int | None = None,
 	roi_x_start: int = 0,
 	roi_x_end: int | None = None,
+	opening_disk_radius: int = 0,
 ) -> PixelCentroid:
 	"""Compute bob centroid (x_px, y_px) rounded to integer pixels or (nan, nan)."""
 	y_end: int = int(frame_gray.shape[0]) if roi_y_end is None else roi_y_end
@@ -49,6 +59,7 @@ def compute_bob_centroid(
 		threshold_low=threshold_low,
 		threshold_high=threshold_high,
 		disk_radius=disk_radius,
+		opening_disk_radius=opening_disk_radius,
 	)
 	labels: npt.NDArray[np.int64] = skimage.measure.label(mask)
 	regions = skimage.measure.regionprops(labels)
