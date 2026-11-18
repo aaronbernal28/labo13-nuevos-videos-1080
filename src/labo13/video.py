@@ -1,7 +1,9 @@
+import math
 from concurrent.futures import Future, ThreadPoolExecutor
 from pathlib import Path
 
 import av
+import matplotlib.patheffects as patheffects
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
@@ -194,6 +196,120 @@ def extract_trimmed_frames_gray(
 	return records
 
 
+def _compute_label_offsets_pt(
+	xs: npt.NDArray[np.float64],
+	ys: npt.NDArray[np.float64],
+	image_shape: tuple[int, ...],
+) -> list[tuple[float, float]]:
+	"""Select non-overlapping (dx_pt, dy_pt) label offsets around trajectory points."""
+	img_height: int = int(image_shape[0])
+	img_width: int = int(image_shape[1])
+	px_per_pt: float = max(float(img_width) / 800.0, float(img_height) / 450.0, 1e-6)
+
+	half_w_px: float = 9.2 * px_per_pt
+	half_h_px: float = 4.3 * px_per_pt
+	dot_pad_px: float = 2.5 * px_per_pt
+	margin_x_px: float = 2.0 * px_per_pt
+	margin_y_px: float = 2.0 * px_per_pt
+
+	radii_pt: tuple[float, ...] = (
+		9.0,
+		16.0,
+		23.0,
+		31.0,
+		40.0,
+		50.0,
+		62.0,
+		76.0,
+		92.0,
+		110.0,
+		130.0,
+		152.0,
+		176.0,
+		202.0,
+		230.0,
+	)
+	angles_deg: tuple[float, ...] = tuple(
+		angle
+		for idx in range(12)
+		for angle in (90.0 + float(idx) * 15.0, 90.0 - float(idx + 1) * 15.0)
+	)
+	candidates: list[tuple[float, float]] = [
+		(
+			radius * math.cos(math.radians(angle)),
+			radius * math.sin(math.radians(angle)),
+		)
+		for radius in radii_pt
+		for angle in angles_deg
+	]
+
+	placed_lx: list[float] = []
+	placed_ly: list[float] = []
+	offsets: list[tuple[float, float]] = []
+
+	for idx in range(len(xs)):
+		px: float = float(xs[idx])
+		py: float = float(ys[idx])
+		best_offset: tuple[float, float] = candidates[0]
+		best_cost: float = float("inf")
+
+		for dx_pt, dy_pt in candidates:
+			lx: float = px + dx_pt * px_per_pt
+			ly: float = py - dy_pt * px_per_pt
+
+			cost: float = 0.5 * math.hypot(dx_pt, dy_pt)
+			if (
+				lx - half_w_px < margin_x_px
+				or lx + half_w_px > float(img_width) - margin_x_px
+				or ly - half_h_px < margin_y_px
+				or ly + half_h_px > float(img_height) - margin_y_px
+			):
+				cost += 1_000_000.0
+
+			dot_dx: npt.NDArray[np.float64] = np.abs(xs - lx)
+			dot_dy: npt.NDArray[np.float64] = np.abs(ys - ly)
+			dot_hits: int = int(
+				np.count_nonzero(
+					(dot_dx < half_w_px + dot_pad_px)
+					& (dot_dy < half_h_px + dot_pad_px)
+				)
+			)
+			if dot_hits > 0:
+				cost += 5_000.0 * float(dot_hits)
+
+			if placed_lx:
+				arr_lx: npt.NDArray[np.float64] = np.asarray(
+					placed_lx, dtype=np.float64
+				)
+				arr_ly: npt.NDArray[np.float64] = np.asarray(
+					placed_ly, dtype=np.float64
+				)
+				ov_x: npt.NDArray[np.float64] = np.maximum(
+					0.0, 2.0 * half_w_px - np.abs(arr_lx - lx)
+				)
+				ov_y: npt.NDArray[np.float64] = np.maximum(
+					0.0, 2.0 * half_h_px - np.abs(arr_ly - ly)
+				)
+				ov_area: npt.NDArray[np.float64] = ov_x * ov_y
+				label_hits: int = int(np.count_nonzero(ov_area > 0.0))
+				if label_hits > 0:
+					cost += 20_000.0 * float(label_hits) + float(
+						np.sum(ov_area) / (px_per_pt * px_per_pt)
+					)
+
+			if cost < best_cost:
+				best_cost = cost
+				best_offset = (dx_pt, dy_pt)
+				if cost <= 0.5 * math.hypot(dx_pt, dy_pt) + 1e-9:
+					break
+
+		offsets.append(best_offset)
+		placed_lx.append(px + best_offset[0] * px_per_pt)
+		placed_ly.append(py - best_offset[1] * px_per_pt)
+
+	return offsets
+
+
 def plot_trajectory_on_frame(
 	initial_frame_gray: npt.NDArray[np.uint8],
 	df_video: pd.DataFrame,
@@ -206,12 +322,46 @@ def plot_trajectory_on_frame(
 
 	fig, ax = plt.subplots(figsize=(12, 7))
 	ax.imshow(initial_frame_gray, cmap="gray")
+	xs: npt.NDArray[np.float64] = df_valid["x"].to_numpy(dtype=np.float64)
+	ys: npt.NDArray[np.float64] = df_valid["y"].to_numpy(dtype=np.float64)
 	ax.scatter(
-		df_valid["x"].to_numpy(dtype=np.float64),
-		df_valid["y"].to_numpy(dtype=np.float64),
+		xs,
+		ys,
 		color="C1",
 		s=5,
 	)
+	if "frame_index" in df_valid.columns and len(df_valid) > 0:
+		frame_indices: npt.NDArray[np.int64] = df_valid["frame_index"].to_numpy(
+			dtype=np.int64
+		)
+		offsets_pt: list[tuple[float, float]] = _compute_label_offsets_pt(
+			xs=xs, ys=ys, image_shape=initial_frame_gray.shape
+		)
+		for x_val, y_val, frame_idx, (dx_pt, dy_pt) in zip(
+			xs, ys, frame_indices, offsets_pt, strict=True
+		):
+			text_artist = ax.annotate(
+				str(int(frame_idx)),
+				xy=(float(x_val), float(y_val)),
+				xytext=(dx_pt, dy_pt),
+				textcoords="offset points",
+				ha="center",
+				va="center",
+				fontsize=4.5,
+				fontweight="bold",
+				color="white",
+				arrowprops={
+					"arrowstyle": "-",
+					"color": "C1",
+					"lw": 0.4,
+					"alpha": 0.7,
+					"shrinkA": 0,
+					"shrinkB": 1,
+				},
+			)
+			text_artist.set_path_effects(
+				[patheffects.withStroke(linewidth=1.2, foreground="black")]
+			)
 	if video_name:
 		ax.set_title(
 			f"{video_name} — Trajectory ({len(df_valid)}/{len(df_video)} frames)"
