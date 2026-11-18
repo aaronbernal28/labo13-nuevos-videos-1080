@@ -23,6 +23,7 @@ def main() -> None:
 	threshold_low: float = float(snakemake.params.threshold_low)
 	threshold_high: float = float(snakemake.params.threshold_high)
 	disk_radius: int = int(snakemake.params.disk_radius)
+	opening_disk_radius: int = int(snakemake.params.opening_disk_radius)
 	roi_y_start: int = int(snakemake.params.roi_y_start)
 	roi_y_end: int = int(snakemake.params.roi_y_end)
 	roi_x_start: int = int(snakemake.params.roi_x_start)
@@ -48,6 +49,7 @@ def main() -> None:
 		roi_y_end=roi_y_end,
 		roi_x_start=roi_x_start,
 		roi_x_end=roi_x_end,
+		opening_disk_radius=opening_disk_radius,
 	)
 
 	save_frame_detection_row(
