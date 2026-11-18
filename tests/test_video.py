@@ -80,9 +80,10 @@ def test_plot_trajectory_on_frame(tmp_path: Path) -> None:
 	df_video: pd.DataFrame = pd.DataFrame(
 		{
 			"video_name": ["IMG_1556", "IMG_1556", "IMG_1556"],
+			"frame_index": [120, 121, 122],
 			"t": [2.0, 2.0167, 2.0334],
-			"x": pd.Series([20, 40, pd.NA], dtype="Int64"),
-			"y": pd.Series([30, 35, pd.NA], dtype="Int64"),
+			"x": pd.Series([20, 21, pd.NA], dtype="Int64"),
+			"y": pd.Series([30, 31, pd.NA], dtype="Int64"),
 		}
 	)
 	out_png: Path = tmp_path / "IMG_1556_trajectory.png"
