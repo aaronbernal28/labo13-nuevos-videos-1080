@@ -9,7 +9,7 @@ paths:
 
 parameters:
   background_image_key: "superfotograma"
-  fps: 60
+  fps: 6
   threshold_low: 100.0
   threshold_high: 200.0
   morphology_disk_radius: 2
