@@ -57,3 +57,27 @@ def test_compute_bob_centroid_with_roi() -> None:
 	)
 	assert x_px == 90.0
 	assert y_px == 80.0
+
+
+def test_compute_bob_centroid_opening_removes_thin_string() -> None:
+	bg: npt.NDArray[np.uint8] = np.full((120, 140), 200, dtype=np.uint8)
+	frame: npt.NDArray[np.uint8] = bg.copy()
+	yy, xx = np.ogrid[:120, :140]
+	# Circular bob of radius 10 centered at (80, 90)
+	bob_mask: npt.NDArray[np.bool_] = (xx - 80) ** 2 + (yy - 90) ** 2 <= 10**2
+	frame[bob_mask] = 50
+	# Thin 3px-wide pendulum string extending upward from the bob
+	frame[5:85, 79:82] = 160  # diff = 40 (> 20.0)
+
+	x_px: float
+	y_px: float
+	x_px, y_px = compute_bob_centroid(
+		frame_gray=frame,
+		background_gray=bg,
+		threshold_low=20.0,
+		threshold_high=255.0,
+		disk_radius=3,
+		opening_disk_radius=4,
+	)
+	assert x_px == 80.0
+	assert y_px == 90.0
