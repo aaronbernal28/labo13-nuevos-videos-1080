@@ -29,6 +29,7 @@ def main() -> None:
 	initial_png_path: Path = txt_paths[0].with_suffix(".png")
 	initial_frame_gray: npt.NDArray[np.uint8] = load_image_gray(initial_png_path)
 	df_video: pd.DataFrame = build_trajectories_dataframe(txt_paths=txt_paths)
+	df_video["frame_index"] = [parse_stem_metadata(p.stem)[1] for p in txt_paths]
 
 	plot_trajectory_on_frame(
 		initial_frame_gray=initial_frame_gray,
