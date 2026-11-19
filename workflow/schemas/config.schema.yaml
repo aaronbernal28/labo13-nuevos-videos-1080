@@ -127,3 +127,15 @@ properties:
         t_end:
           type: ["integer", "null"]
           minimum: 1
+        roi_y_start:
+          type: ["integer", "null"]
+          minimum: 0
+        roi_y_end:
+          type: ["integer", "null"]
+          minimum: 1
+        roi_x_start:
+          type: ["integer", "null"]
+          minimum: 0
+        roi_x_end:
+          type: ["integer", "null"]
+          minimum: 1

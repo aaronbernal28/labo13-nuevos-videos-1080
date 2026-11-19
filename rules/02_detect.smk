@@ -17,10 +17,10 @@ rule detect_frame:
 		threshold_high = config["parameters"]["threshold_high"],
 		disk_radius = config["parameters"]["morphology_disk_radius"],
 		opening_disk_radius = config["parameters"]["morphology_opening_disk_radius"],
-		roi_y_start = config["parameters"]["roi_y_start"],
-		roi_y_end = config["parameters"]["roi_y_end"],
-		roi_x_start = config["parameters"]["roi_x_start"],
-		roi_x_end = config["parameters"]["roi_x_end"]
+		roi_y_start = get_video_roi_y_start,
+		roi_y_end = get_video_roi_y_end,
+		roi_x_start = get_video_roi_x_start,
+		roi_x_end = get_video_roi_x_end
 	threads: 1
 	resources:
 		mem_mb = 500

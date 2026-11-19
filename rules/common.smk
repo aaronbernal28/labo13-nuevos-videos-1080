@@ -30,6 +30,26 @@ def get_video_t_end(wildcards) -> int | None:
 	return config["videos"][wildcards.video]["t_end"]
 
 
+def get_video_roi_y_start(wildcards) -> int:
+	override: int | None = config["videos"][wildcards.video].get("roi_y_start")
+	return int(config["parameters"]["roi_y_start"] if override is None else override)
+
+
+def get_video_roi_y_end(wildcards) -> int:
+	override: int | None = config["videos"][wildcards.video].get("roi_y_end")
+	return int(config["parameters"]["roi_y_end"] if override is None else override)
+
+
+def get_video_roi_x_start(wildcards) -> int:
+	override: int | None = config["videos"][wildcards.video].get("roi_x_start")
+	return int(config["parameters"]["roi_x_start"] if override is None else override)
+
+
+def get_video_roi_x_end(wildcards) -> int:
+	override: int | None = config["videos"][wildcards.video].get("roi_x_end")
+	return int(config["parameters"]["roi_x_end"] if override is None else override)
+
+
 def collect_detected_frame_txts(wildcards) -> list[str]:
 	"""Resolve checkpoint manifests to list all expected per-frame .txt files across active videos."""
 	txt_files: list[str] = []

@@ -14,9 +14,9 @@ parameters:
   threshold_high: 255.0
   morphology_disk_radius: 3
   morphology_opening_disk_radius: 6
-  roi_y_start: 1080
+  roi_y_start: 1180
   roi_y_end: 2080
-  roi_x_start: 0
+  roi_x_start: 200
   roi_x_end: 3840
   frame_batch_size: 64
   png_compress_level: 1
@@ -52,6 +52,7 @@ videos:
     url: "https://drive.google.com/file/d/1yiYkiyyFnH82KI7UQBh_dGtKFII0p76R/view?usp=drive_link"
     t_start: null
     t_end: null
+    roi_y_start: 1080
   IMG_1556:
     file: "IMG_1556.MOV"
     url: "https://drive.google.com/file/d/1Ko_iG_jW-eF3aX8xf-cvqhTFmNtceOSE/view?usp=drive_link"
@@ -60,7 +61,7 @@ videos:
   IMG_1557:
     file: "IMG_1557.MOV"
     url: "https://drive.google.com/file/d/1sPhB7ZXdDpAlu3-gkL8NMXjqvmiCZ4vf/view?usp=drive_link"
-    t_start: null
+    t_start: 1
     t_end: null
   IMG_1558:
     file: "IMG_1558.MOV"
@@ -86,7 +87,7 @@ videos:
     file: "IMG_1562.MOV"
     url: "https://drive.google.com/file/d/1FGHw9uC1k9yuTHkOqSoexXQxKgg9-xKz/view?usp=drive_link"
     t_start: 2
-    t_end: null
+    t_end: 17
   IMG_1563:
     file: "IMG_1563.MOV"
     url: "https://drive.google.com/file/d/1iFds9fidJmm_7bCraIAWWR6LcJsTDSc0/view?usp=drive_link"
@@ -100,7 +101,7 @@ videos:
   IMG_1565:
     file: "IMG_1565.MOV"
     url: "https://drive.google.com/file/d/16ndBa5GYvaGHjuu1711Ct7iMMoeEpUfh/view?usp=drive_link"
-    t_start: 2
+    t_start: 3
     t_end: null
   IMG_1566:
     file: "IMG_1566.MOV"
