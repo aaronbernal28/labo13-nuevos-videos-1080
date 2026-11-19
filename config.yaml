@@ -17,7 +17,7 @@ parameters:
   roi_y_start: 1180
   roi_y_end: 2080
   roi_x_start: 200
-  roi_x_end: 3840
+  roi_x_end: 3500
   frame_batch_size: 64
   png_compress_level: 1
 
@@ -51,8 +51,9 @@ videos:
     file: "IMG_1555.MOV"
     url: "https://drive.google.com/file/d/1yiYkiyyFnH82KI7UQBh_dGtKFII0p76R/view?usp=drive_link"
     t_start: null
-    t_end: null
+    t_end: 22
     roi_y_start: 1080
+    roi_x_end: 3840
   IMG_1556:
     file: "IMG_1556.MOV"
     url: "https://drive.google.com/file/d/1Ko_iG_jW-eF3aX8xf-cvqhTFmNtceOSE/view?usp=drive_link"
