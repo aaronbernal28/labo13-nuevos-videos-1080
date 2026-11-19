@@ -5,8 +5,11 @@ import numpy as np
 import numpy.typing as npt
 
 from labo13.detection import compute_bob_centroid
-from labo13.io import parse_stem_metadata, save_frame_detection_row
-from labo13.video import load_image_gray
+from labo13.frame_io import (
+	load_image_gray,
+	parse_stem_metadata,
+	save_frame_detection_row,
+)
 
 
 if TYPE_CHECKING:
