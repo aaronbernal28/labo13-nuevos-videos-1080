@@ -12,6 +12,7 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from PIL import Image
 
+from labo13.frame_io import load_image_gray as load_image_gray
 from labo13.types import FrameRecord
 
 
@@ -32,14 +33,6 @@ def format_frame_stem(video_name: str, frame_index: int, t_sec: float) -> str:
 	"""Format illustrative frame stem '{video}_f{index:06d}_t{seconds:.4f}'."""
 	stem: str = f"{video_name}_f{frame_index:06d}_t{t_sec:.4f}"
 	return stem
-
-
-def load_image_gray(image_path: Path) -> npt.NDArray[np.uint8]:
-	"""Load an image file from disk as a 2D uint8 greyscale array."""
-	with Image.open(image_path) as img:
-		gray_img: Image.Image = img.convert("L")
-		arr: npt.NDArray[np.uint8] = np.asarray(gray_img, dtype=np.uint8)
-	return arr
 
 
 def save_image_gray(
