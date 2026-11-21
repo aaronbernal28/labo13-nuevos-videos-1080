@@ -51,7 +51,6 @@ module = [
 	"gdown.*",
 	"matplotlib.*",
 	"scipy.*",
-	"skimage.*",
 	"snakemake.*",
 	"tqdm.*",
 ]
