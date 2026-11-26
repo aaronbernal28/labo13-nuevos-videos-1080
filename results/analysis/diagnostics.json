@@ -1,0 +1,101 @@
+{
+  "measured_pivot": {
+    "xc_px": 1960.0,
+    "yc_px": 37.0,
+    "r_px": 1988.7512799101833,
+    "rms_radial_px": 16.625593260396606,
+    "n_points": 4600
+  },
+  "fitted_circle_crosscheck": {
+    "xc_px": 1988.360372563405,
+    "yc_px": 35.57273121736498,
+    "r_px": 1990.0840515590203,
+    "rms_radial_px": 9.531612223612626,
+    "n_points": 4600
+  },
+  "reference_period": {
+    "toma_ref": "Toma 14",
+    "theta0_ref_deg": 2.1663876496886108,
+    "T_ref_obs_s": 2.072535539374663,
+    "T0_borda_lim_s": 2.072350369523409,
+    "sigma_T0_s": 5.5124291469379085e-05
+  },
+  "length_comparison": {
+    "largo_m": 1.072,
+    "sigma_l_m": 0.005,
+    "g_ref_m_s2": 9.797,
+    "T0_teo_s": 2.0784075292633046,
+    "sigma_T0_teo_s": 0.004847032484289423,
+    "diff_teo_exp_ms": 6.057159739895734,
+    "z_teo_exp": 1.2495827250607197,
+    "L_eff_m": 1.0657607871552368,
+    "sigma_L_eff_m": 5.6698238996421345e-05
+  },
+  "compatibility_3sigma": {
+    "n_total": 14,
+    "n_compatible": 1,
+    "n_incompatible": 13,
+    "last_compatible_toma": "Toma 14",
+    "last_compatible_theta0_deg": 2.1663876496886108,
+    "first_incompatible_toma": "Toma 13",
+    "first_incompatible_theta0_deg": 3.7824794402250266
+  },
+  "borda_agreement": {
+    "max_abs_dev_ms": 1.5068924465189149,
+    "max_abs_dev_toma": "Toma 5",
+    "rms_dev_ms": 1.0452840191362924,
+    "mean_dev_ms": 0.6811693120050144
+  },
+  "amplitude_decay_summary": {
+    "min_amp_drop_pct": 1.779116754725605,
+    "min_amp_drop_toma": "Toma 10",
+    "max_amp_drop_pct": 9.498037175748104,
+    "max_amp_drop_toma": "Toma 1"
+  },
+  "representative_takes": {
+    "Toma 1": {
+      "toma": "Toma 1",
+      "toma_idx": 1,
+      "video_name": "IMG_1555",
+      "n_frames": 1307,
+      "duracion_s": 21.9833,
+      "theta0_deg": 56.34028930236934,
+      "sigma_theta0_deg": 0.09268807847641425,
+      "T_s": 2.203352416047122,
+      "sigma_T_s": 0.0001987071926233252,
+      "offset_deg": 0.2527618364387458,
+      "s_res_deg": 2.358925667404576,
+      "rms_res_deg": 2.355313221690203,
+      "dof": 1303,
+      "delta_T_ms": 131.00204652371295,
+      "sigma_delta_T_ms": 0.20621162894037845,
+      "three_sigma_delta_T_ms": 0.6186348868211353,
+      "z_score": 635.2796260660416,
+      "compatible_3sigma": false,
+      "T_borda_s": 2.204526135526309,
+      "delta_T_borda_ms": -1.1737194791869854
+    },
+    "Toma 14": {
+      "toma": "Toma 14",
+      "toma_idx": 14,
+      "video_name": "IMG_1568",
+      "n_frames": 811,
+      "duracion_s": 13.5,
+      "theta0_deg": 2.1663876496886108,
+      "sigma_theta0_deg": 0.0006794423344568585,
+      "T_s": 2.072535539374663,
+      "sigma_T_s": 5.5124291469379085e-05,
+      "offset_deg": -0.22967586840392387,
+      "s_res_deg": 0.013678452827413593,
+      "rms_res_deg": 0.013644678818274412,
+      "dof": 807,
+      "delta_T_ms": 0.18516985125405228,
+      "sigma_delta_T_ms": 0.07795752061220342,
+      "three_sigma_delta_T_ms": 0.23387256183661026,
+      "z_score": 2.3752660397599397,
+      "compatible_3sigma": true,
+      "T_borda_s": 2.072535554541283,
+      "delta_T_borda_ms": -1.516661995992763e-05
+    }
+  }
+}
