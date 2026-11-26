@@ -1,6 +1,12 @@
-# LABO 13 — Simple Pendulum: Nonlinear Behavior at Large Angles (1080p)
+# LABO 1 — Simple Pendulum: Nonlinear Behavior at Large Angles (4K 60 fps)
 
-Reproducible 3-tier **Python + Snakemake** workflow for tracking a simple pendulum across 1080p `.MOV` videos and analyzing the breakdown of the **small-angle (sinusoidal) approximation** as oscillation amplitude increases.
+Reproducible 3-tier **Python + Snakemake** workflow for tracking a simple pendulum across 4K (`3840x2160`) 60 fps `.MOV` videos and analyzing the breakdown of the **small-angle (sinusoidal) approximation** as oscillation amplitude increases.
+
+## Authors
+
+- **Christian Gustavo Montaño Herrera**
+- **Aaron Bernal Huanca**
+- **Nazareno Ezequiel Ordiz**
 
 ---
 
@@ -8,22 +14,21 @@ Reproducible 3-tier **Python + Snakemake** workflow for tracking a simple pendul
 
 ### Stage 1 — Automated Video Tracking Pipeline (Snakemake)
 
-Convert raw 1080p pendulum videos into a single tidy trajectory table `results/trajectories.csv` (`video_name,t,x,y`):
+Convert raw 4K (`3840x2160`) 60 fps pendulum videos into a single tidy trajectory table `results/trajectories.csv` (`video_name,t,x,y`):
 
-1. **Parallel Media Acquisition (`download_video`, `download_image`)**: Downloads the 15 active oscillation videos (`IMG_1555.MOV`–`IMG_1569.MOV`) and the shared background frame (`superfotograma.png`) in parallel directly from Google Drive.
-2. **Greyscale Frame Extraction & Trimming (`extract_frames` checkpoint)**: Decodes each video via PyAV, filters frames within configured integer-second bounds `[t_start, t_end)` using the container's real presentation timestamp (PTS), converts to 8-bit greyscale, and writes lossless PNGs named `{video}_f{index:06d}_t{seconds:.4f}.png` alongside a per-video manifest TSV (`media/frames/{video}.manifest.tsv`).
-3. **Per-Frame Centroid Detection (`detect_frame`)**: Runs **one independent Snakemake job per frame** comparing `{stem}.png` against `superfotograma.png` (background subtraction $\to$ intensity threshold `[threshold_low, threshold_high]` $\to$ morphological closing $\to$ largest connected-component centroid) and writes a single CSV row `video_name,t,x,y` to `{stem}.txt`.
+1. **Parallel Media Acquisition (`download_video`, `download_image`)**: Downloads the oscillation videos and the shared background frame (`superfotograma.png`) in parallel from Google Drive.
+2. **Greyscale Frame Extraction & Trimming (`extract_frames` checkpoint)**: Decodes each video via PyAV, filters frames within configured integer-second bounds `[t_start, t_end)` using the container's presentation timestamp (PTS), converts to 8-bit greyscale, and writes lossless PNGs named `{video}_f{index:06d}_t{seconds:.4f}.png` alongside a per-video manifest TSV (`media/frames/{video}.manifest.tsv`).
+3. **Per-Frame Centroid Detection (`detect_frame`)**: Runs **one independent Snakemake job per frame** using `scipy.ndimage` comparing `{stem}.png` against `superfotograma.png` inside the ROI (background subtraction $\to$ intensity threshold `(20, 255)` $\to$ morphological closing with disk $r = 3\text{ px}$ $\to$ morphological opening with disk $r = 6\text{ px}$ to remove the thin string $\to$ largest 8-connected-component centroid) and writes a single CSV row `video_name,t,x,y` to `{stem}.txt`.
 4. **Trajectory Aggregation (`aggregate_csv`)**: Collects all per-frame `.txt` rows resolved through the checkpoint manifests and exports `results/trajectories.csv` sorted deterministically by `(video_name, t)`.
 
-### Stage 2 — Amplitude-Dependence & Nonlinear Regime Analysis (Notebook)
+### Stage 2 — Amplitude-Dependence & Nonlinear Regime Analysis (Snakemake + Notebook)
 
-Using `results/trajectories.csv` and the pure physics library (`labo13.physics`):
+Using `results/trajectories.csv` and the pure Tier 1 analysis library (`labo13.pendulum_analysis` and `labo13.analysis_plots`) across the 14 analyzed takes (`Toma 1` at $\theta_0 \approx 56{,}34^\circ$ down to `Toma 14` at $\theta_0 \approx 2{,}17^\circ$):
 
-1. **Cartesian-to-Polar Transformation**: Estimate the equilibrium point $(x_0, y_0)$, convert pixel coordinates $(x, y)$ into meters $(X_m, Y_m)$ and polar angle $\theta(t) = \arctan2(X_m, Y_m)$, and propagate both point-to-point statistical centroid uncertainties ($\sigma_{\theta,\text{stat}}$) and systematic calibration/length uncertainties ($\sigma_{\theta,\text{total}}$).
-2. **Model Comparison**: Fit and compare two physical models for $\theta(t)$ across runs of increasing initial amplitude $\theta_0$:
-   - **Linear (Small-Angle Harmonic)**: $\ddot\theta + 2\gamma\dot\theta + \omega_0^2\,\theta = 0 \implies \theta(t) = A e^{-\gamma t}\cos(\omega t + \phi) + \theta_{\text{offset}}$
-   - **Nonlinear (Exact Restoring Torque)**: $\ddot\theta + 2\gamma\dot\theta + \omega_0^2\,\sin\theta = 0$ integrated numerically via 8th-order Runge-Kutta (`DOP853`).
-3. **Anharmonic Period Shift**: Verify that larger initial amplitudes $\theta_0$ degrade the sinusoidal approximation (increasing $\chi^2_{\text{red}}$ and structured residuals in the linear fit) and shift the oscillation period according to the Borda elliptic expansion:
+1. **Angular Reconstruction**: Converts detected centroids $(x, y)$ directly to $\theta(t) = \operatorname{atan2}(x - x_p, y - y_p)$ using the measured 4K suspension point $(x_p, y_p) = (1960,\,37)\text{ px}$ (cross-checked against a circular-arc fit over large-angle takes, yielding $|\Delta\theta_0| \le 0{,}03^\circ$ and $|\Delta T| \le 0{,}005\text{ ms}$).
+2. **Two-Stage Empirical-Residual Double Fit**: Fits the undamped sinusoidal model $\theta(\tau) = \theta_0\cos(\omega\tau + \phi) + \theta_{\text{off}}$ initialized via zero-padded FFT and linear least squares. Stage 1 performs an unweighted nonlinear least-squares fit to estimate the empirical per-point residual dispersion $s_{\text{res}} = \sqrt{\sum r_i^2 / (N - 4)}$; Stage 2 re-fits with $\sigma_i = s_{\text{res}}$ (`absolute_sigma=True`) to propagate uncertainties directly from observed data dispersion.
+3. **Model-Free Amplitude Decay Check**: Compares first-cycle vs. last-cycle peak-to-peak amplitudes (`scipy.signal.find_peaks`) to quantify amplitude decay across each recording (`1.78%` to `9.50%`) without introducing a damped model.
+4. **Small-Angle Breakdown & Borda Expansion**: Compares $T(\theta_0)$ against the small-angle experimental limit $T_0 = (2.07235 \pm 0.00006)\text{ s}$ (compatible at $1.25\sigma$ with the theoretical prediction $T_{0,\text{teo}} = 2\pi\sqrt{L/g} = (2.07841 \pm 0.00485)\text{ s}$ for $L = 1.072\text{ m}$), identifies the $3\sigma$ transition interval $(2.17^\circ,\,3.78^\circ]$, and validates agreement with Borda's second-order expansion ($\text{RMS} = 1.05\text{ ms}$):
 
 $$T(\theta_0) \approx T_0\left(1 + \frac{\theta_0^2}{16} + \frac{11\,\theta_0^4}{3072} + \dots\right), \qquad T_0 = 2\pi\sqrt{\frac{L}{g}}$$
 
@@ -33,11 +38,11 @@ $$T(\theta_0) \approx T_0\left(1 + \frac{\theta_0^2}{16} + \frac{11\,\theta_0^4}
 
 | Quantity | Symbol | Value | Uncertainty | Notes |
 |---|---|---|---|---|
-| Pendulum length (without base) | $L_{\text{sin base}}$ | $0.737\text{ m}$ | $\pm 0.005\text{ m}$ | Suspension point to top of bob |
-| Pendulum length (with base) | $L_{\text{con base}}$ | $0.778\text{ m}$ | $\pm 0.005\text{ m}$ | Suspension point to bottom of bob |
-| Effective center-of-mass length | $L_{\text{CM}}$ | $0.7575\text{ m}$ | $\pm 0.005\text{ m}$ | $\frac{1}{2}(L_{\text{sin base}} + L_{\text{con base}})$ |
-| Pendulum width | $w$ | $3.0\text{ mm}$ | $\pm 0.2\text{ mm}$ | Measured with caliper |
-| Camera frame period | $\Delta t$ | $1/59.96\text{ s}$ | $\approx 16.68\text{ ms}$ | Fixed camera (~59.96 fps) |
+| Pendulum length | $L$ | $1.072\text{ m}$ ($107.2\text{ cm}$) | $\pm 0.005\text{ m}$ ($\pm 0.5\text{ cm}$) | Suspension pivot to center of mass of bob |
+| Local gravity (Buenos Aires) | $g$ | $9.797\text{ m/s}^2$ | — | Reference value for $T_{0,\text{teo}} = 2\pi\sqrt{L/g}$ |
+| Measured suspension pivot | $(x_p, y_p)$ | $(1960,\,37)\text{ px}$ | — | Direct measurement on 4K (`3840x2160`) frame |
+| Camera resolution & frame rate | $\text{fps}$ | $60\text{ fps}$ (`3840x2160`) | $\Delta t \approx 16.67\text{ ms}$ | Fixed camera, real-time playback |
+| Active analyzed takes | — | $14$ takes (`Toma 1`–`Toma 14`) | — | Ordered from largest ($\theta_0 = 56.34^\circ$) to smallest ($2.17^\circ$) |
 
 ---
 
@@ -51,13 +56,10 @@ labo13-nuevos-videos-1080/
 ├── uv.lock                                ← Locked Python 3.12 dependency versions for uv
 ├── ruff.toml                              ← Ruff linter/formatter config (tab indentation, snakemake builtin)
 ├── .env.example                           ← Template for optional environment variables (never commit .env)
-├── .gitignore                             ← Ignores media/, .snakemake/, .venv/, .env, checkpoints
+├── .gitignore                             ← Ignores media/, docs/, .snakemake/, .venv/, .env, checkpoints
 ├── README.md                              ← Project overview, ASCII tree, setup & Snakemake commands
 ├── envs/
 │   └── default.yaml                       ← Conda environment specification for rule portability
-├── docs/
-│   ├── workflow_plan.md                   ← Initial interview summary plan
-│   └── workflow_plan_bis.md               ← Extended convention-compliant implementation plan
 ├── workflow/
 │   └── schemas/
 │       └── config.schema.yaml             ← JSON Schema Draft 2020-12 validating config.yaml
@@ -67,36 +69,48 @@ labo13-nuevos-videos-1080/
 │   ├── 01_frames.smk                      ← Checkpoint extract_frames (grey PNGs + manifest TSV)
 │   ├── 02_detect.smk                      ← Rule detect_frame (parallel 1-job-per-frame centroid TXT)
 │   ├── 03_aggregate.smk                   ← Rule aggregate_csv (checkpoint aggregation into CSV)
-│   └── 04_plot.smk                        ← Rule plot_video_trajectory (overlay x,y on initial frame)
+│   ├── 04_plot.smk                        ← Rule plot_video_trajectory (overlay x,y on initial frame)
+│   ├── 05_analysis.smk                    ← Rules analyze_pendulum & analyze_pendulum_all (Stage 2)
+│   └── 06_figures.smk                     ← Rules plot_analysis_figures & analysis_figures_all (Stage 2)
 ├── scripts/                               ← Tier 2: Thin Snakemake adapter scripts (*.py)
 │   ├── download_file.py                   ← Unpacks snakemake -> labo13.io.download_drive_file
 │   ├── extract_frames.py                  ← Unpacks snakemake -> labo13.video.extract_trimmed_frames_gray
 │   ├── detect_frame.py                    ← Unpacks snakemake -> labo13.detection.compute_bob_centroid
 │   ├── aggregate_csv.py                   ← Unpacks snakemake -> labo13.io.build_trajectories_dataframe
-│   └── plot_trajectory.py                 ← Unpacks snakemake -> labo13.video.plot_trajectory_on_frame
+│   ├── plot_trajectory.py                 ← Unpacks snakemake -> labo13.video.plot_trajectory_on_frame
+│   ├── analyze_pendulum.py                ← Unpacks snakemake -> labo13.pendulum_analysis.run_pendulum_analysis
+│   └── plot_analysis_figures.py           ← Unpacks snakemake -> labo13.analysis_plots (title-free PNGs)
 ├── src/                                   ← Tier 1: Pure modular domain library (zero Snakemake coupling)
 │   └── labo13/
 │       ├── __init__.py                    ← Package exports and version
 │       ├── types.py                       ← Dataclasses (FrameRecord, PendulumConstants, HarmonicFitResult)
 │       ├── io.py                          ← Per-file Drive download, manifest TSV & TXT/CSV I/O
+│       ├── frame_io.py                    ← Fast greyscale PNG serialization helpers
 │       ├── video.py                       ← PyAV decoding, PTS time trimming & greyscale frame I/O
-│       ├── detection.py                   ← Foreground segmentation & centroid extraction
-│       └── physics.py                     ← Cartesian-to-polar error propagation, harmonic & ODE fits
+│       ├── detection.py                   ← scipy.ndimage background subtraction, closing/opening & centroid
+│       ├── physics.py                     ← Legacy polar/ODE physics helpers
+│       ├── pendulum_analysis.py           ← Measured-pivot conversion, double fit, peak decay & Borda tables
+│       └── analysis_plots.py              ← Title-free 300 dpi Matplotlib report figure generators
 ├── tests/                                 ← Unit tests independent of Snakemake (pytest)
 │   ├── test_io.py                         ← Tests TXT row formatting/parsing & CSV sorting
 │   ├── test_video.py                      ← Tests integer-second trim predicates & filename formatting
-│   └── test_detection.py                  ← Tests synthetic circle centroid & NaN fallback on empty frame
+│   ├── test_detection.py                  ← Tests synthetic circle centroid & NaN fallback on empty frame
+│   └── test_pendulum_analysis.py          ← Tests pivot fit, double fit, peak decay, Borda & LaTeX table
 ├── notebooks/
+│   ├── colab_pendulum_analysis.ipynb      ← Clean Colab/local Stage 2 analysis notebook aligned with Tier 1
+│   ├── debug_frame_detection.ipynb        ← Manual frame-detection inspection notebook
 │   └── original/
 │       └── Copia de [LABO 13] Nuevos Videos 1080.ipynb ← Original unmodified Colab notebook
 ├── media/                                 ← Gitignored raw media and intermediate frame artifacts
 │   ├── raw/
-│   │   ├── videos/                        ← Downloaded {video}.MOV files (IMG_1555..IMG_1569)
+│   │   ├── videos/                        ← Downloaded {video}.MOV files
 │   │   └── images/                        ← Downloaded background image (superfotograma.png)
 │   └── frames/
 │       └── {video}/                       ← {video}_f{index:06d}_t{seconds:.4f}.{png,txt}
 └── results/
-    └── trajectories.csv                   ← Final tidy table: video_name,t,x,y
+    ├── trajectories.csv                   ← Stage 1 tidy table: video_name,t,x,y (60 fps)
+    ├── plots/                             ← Per-video trajectory overlays over initial frames
+    └── analysis/                          ← Stage 2 verified outputs (summary CSV, decay CSV, JSON, LaTeX)
 ```
 
 ---
@@ -106,158 +120,37 @@ labo13-nuevos-videos-1080/
 | Rule / Checkpoint | Input(s) | Output(s) | Description |
 |---|---|---|---|
 | `download_video` | Google Drive URL (`config.yaml`) | `media/raw/videos/{video}.MOV` | Downloads each enabled video in parallel via `gdown` |
-| `download_image` | Google Drive URL (`config.yaml`) | `media/raw/images/{image_file}` | Downloads `superfotograma.png` (and any enabled image) |
+| `download_image` | Google Drive URL (`config.yaml`) | `media/raw/images/{image_file}` | Downloads `superfotograma.png` |
 | `extract_frames` *(checkpoint)* | `media/raw/videos/{video}.MOV` | `media/frames/{video}/`, `media/frames/{video}.manifest.tsv` | Extracts trimmed greyscale PNG frames `{video}_f{index:06d}_t{seconds:.4f}.png` |
 | `detect_frame` | `media/frames/{video}/{stem}.png`, `media/raw/images/superfotograma.png` | `media/frames/{video}/{stem}.txt` | Runs **1 job per frame** writing a single CSV line `video_name,t,x,y` |
 | `aggregate_csv` | All `media/frames/{video}/{stem}.txt` | `results/trajectories.csv` | Concatenates and sorts all per-frame detections by `(video_name, t)` |
-| `plot_video_trajectory` | All `media/frames/{video}/{stem}.txt` for `{video}` | `results/plots/{video}_trajectory.png` | Plots all detected `(x, y)` points for `{video}` over its initial extracted frame PNG |
+| `plot_video_trajectory` | All `media/frames/{video}/{stem}.txt` for `{video}` | `results/plots/{video}_trajectory.png` | Plots all detected `(x, y)` points for `{video}` over its initial frame PNG |
+| `analyze_pendulum` | `results/trajectories.csv` | `results/analysis/{summary_table.csv, amplitude_decay.csv, diagnostics.json, summary_table.tex}` | Runs measured-pivot conversion, two-stage double fit, model-free amplitude decay & Borda analysis |
+| `plot_analysis_figures` | `results/trajectories.csv`, `results/analysis/{summary_table.csv, diagnostics.json}`, sample frame & background | `docs/figures/fig_{procesamiento_fotograma, theta_pequena, theta_grande, periodo_vs_amplitud}.png` | Generates title-free 300 dpi figures for the report |
 
 ### Output CSV Schema (`results/trajectories.csv`)
 
 | Column | Type | Units / Origin | Description |
 |---|---|---|---|
 | `video_name` | `str` | — | Video identifier matching the key in `config.yaml` (e.g. `IMG_1556`) |
-| `t` | `float` | seconds (`s`) | Original video presentation timestamp (PTS) of the frame (not reset to 0 when trimmed) |
+| `t` | `float` | seconds (`s`) | Original video presentation timestamp (PTS) of the frame |
 | `x` | `int \| NaN` | pixels (`px`) | Horizontal bob centroid rounded to nearest integer pixel (origin top-left; `nan` if undetected) |
 | `y` | `int \| NaN` | pixels (`px`) | Vertical bob centroid rounded to nearest integer pixel (origin top-left; grows downward; `nan` if undetected) |
 
 ---
 
-## Worked Example: One Video & One Frame (Illustrative — Not Run)
-
-The trace below shows how **one video** (`IMG_1556`) and **one frame** (frame `120` at `t = 2.0013 s`) move through the pipeline without executing it on real media.
-
-### 1. Configure `IMG_1556` in `config.yaml`
-
-Keep `IMG_1556` active (comment out other videos while testing) and optionally set integer-second trim bounds:
-
-```yaml
-videos:
-  IMG_1556:
-    file: "IMG_1556.MOV"
-    url: "<VIDEO_URL>"
-    t_start: 2
-    t_end: 30
-```
-
-### 2. Targeted Snakemake Commands for One Video / One Frame
-
-```bash
-# Step A: Download only IMG_1556.MOV and superfotograma.png
-uv run snakemake media/raw/videos/IMG_1556.MOV media/raw/images/superfotograma.png --cores 2
-
-# Step B: Extract trimmed greyscale PNGs and manifest for IMG_1556
-uv run snakemake media/frames/IMG_1556.manifest.tsv --cores 1
-
-# Step C: Run detection for a single frame (1 Snakemake job)
-uv run snakemake media/frames/IMG_1556/IMG_1556_f000120_t2.0013.txt --cores 1
-
-# Step D: Plot all detected (x, y) points for IMG_1556 over its initial extracted frame
-uv run snakemake results/plots/IMG_1556_trajectory.png --cores all
-```
-
-### Processing an Existing Frame PNG Directly (`IMG_1555_f001371_t22.8500.png`)
-
-In Snakemake, you always request the **output** file you want to produce, not the input `.png`. Given an extracted frame such as `media/frames/IMG_1555/IMG_1555_f001371_t22.8500.png`, its corresponding detection target is `media/frames/IMG_1555/IMG_1555_f001371_t22.8500.txt` (rule `detect_frame`):
-
-```bash
-# 1. Dry-run: verify Snakemake only schedules detect_frame (plus download_image if superfotograma.png is missing)
-uv run snakemake media/frames/IMG_1555/IMG_1555_f001371_t22.8500.txt -n
-
-# 2. Execute detection for that single frame only
-uv run snakemake media/frames/IMG_1555/IMG_1555_f001371_t22.8500.txt --cores 1
-
-# 3. Force re-running only detect_frame on that frame (e.g., after tuning thresholds in config.yaml)
-uv run snakemake media/frames/IMG_1555/IMG_1555_f001371_t22.8500.txt --cores 1 --force
-```
-
-- Because `media/frames/IMG_1555/IMG_1555_f001371_t22.8500.png` already exists on disk, Snakemake resolves `detect_frame` directly from the `.png` and `media/raw/images/superfotograma.png` without re-running `extract_frames` or processing other frames.
-- `--force` (`-f`) re-runs only the final target rule (`detect_frame`) for that `.txt` file, leaving upstream videos and images untouched.
-
-### 3. Artifacts & Illustrative File Contents
-
-| Step / Rule | Generated Artifact | Illustrative Content / Purpose |
-|---|---|---|
-| `download_video` | `media/raw/videos/IMG_1556.MOV` | Raw 1080p video (~59.96 fps) downloaded from Drive |
-| `download_image` | `media/raw/images/superfotograma.png` | Shared static background image for subtraction |
-| `extract_frames` | `media/frames/IMG_1556/IMG_1556_f000120_t2.0013.png` | 8-bit greyscale PNG for frame index `120` at PTS `2.0013 s` |
-| `extract_frames` | `media/frames/IMG_1556.manifest.tsv` | Index of all extracted frames for `IMG_1556` (see below) |
-| `detect_frame` | `media/frames/IMG_1556/IMG_1556_f000120_t2.0013.txt` | Single CSV row without header (see below) |
-| `aggregate_csv` | `results/trajectories.csv` | Sorted table combining all `.txt` rows across active videos |
-| Logs & Benchmarks | `logs/detect_frame/IMG_1556/IMG_1556_f000120_t2.0013.log`<br/>`benchmarks/detect_frame/IMG_1556/IMG_1556_f000120_t2.0013.tsv` | Per-job execution log and Snakemake runtime/memory metrics |
-
-**Illustrative `media/frames/IMG_1556.manifest.tsv`** (tab-separated):
-
-```tsv
-video_name	frame_index	t_sec	stem	png_path
-IMG_1556	120	2.0013	IMG_1556_f000120_t2.0013	media/frames/IMG_1556/IMG_1556_f000120_t2.0013.png
-IMG_1556	121	2.0180	IMG_1556_f000121_t2.0180	media/frames/IMG_1556/IMG_1556_f000121_t2.0180.png
-IMG_1556	122	2.0347	IMG_1556_f000122_t2.0347	media/frames/IMG_1556/IMG_1556_f000122_t2.0347.png
-```
-
-**Illustrative `media/frames/IMG_1556/IMG_1556_f000120_t2.0013.txt`** (1 row, no header):
-
-```text
-IMG_1556,2.0013,812,503
-```
-
-**Illustrative `results/trajectories.csv`** (showing a normal detection and an undetected `nan` frame):
-
-```csv
-video_name,t,x,y
-IMG_1556,2.0013,812,503
-IMG_1556,2.0180,814,504
-IMG_1556,2.0347,nan,nan
-```
-
----
-
-## Frame Naming & Incremental Re-Runs
-
-Every extracted frame uses the stem `{video}_f{index:06d}_t{seconds:.4f}`:
-
-- **`{video}`**: Key from `videos:` in `config.yaml` (e.g., `IMG_1556`).
-- **`f{index:06d}`**: Zero-padded 0-based frame counter in the original video stream (unchanged when `t_start` changes).
-- **`t{seconds:.4f}`**: Container presentation timestamp (PTS) in seconds to 4 decimal places (falls back to `index / fps` only if PTS is absent).
-
-Because frame filenames encode the original index and timestamp, Snakemake handles config edits incrementally:
-
-| Change in `config.yaml` | What Snakemake Re-Runs |
-|---|---|
-| Expand `[t_start, t_end)` on `IMG_1556` | Re-runs `extract_frames` for `IMG_1556`, then runs `detect_frame` **only** for newly added frames |
-| Adjust `threshold_low`, `threshold_high`, or `morphology_disk_radius` | Re-runs `detect_frame` and `aggregate_csv` using existing PNGs (no video re-download or re-decoding) |
-| Comment out a video under `videos:` | Excludes that video from `aggregate_csv` without touching remaining videos |
-
----
-
-## Troubleshooting & Operational Notes
-
-- **Interrupted run lock (`LockException`)**: If a Snakemake execution is interrupted (`Ctrl+C`), clear the directory lock before retrying:
-  ```bash
-  uv run snakemake --unlock
-  ```
-- **Google Drive rate limiting during downloads**: All 15 `download_video` rules can run concurrently. If Google Drive throttles parallel requests, download with capped concurrency first (`uv run snakemake -j 2 --until download_video download_image`), then run `uv run snakemake --cores all` for frame extraction and detection.
-- **Disk footprint & job scale**: Greyscale 1080p PNGs take roughly 0.5–1 MB per frame (~1,800 frames per 30 s video at 59.96 fps), and `detect_frame` schedules 1 job per frame. Validate trim bounds on a single video before enabling all 15.
-- **Undetected frames (`nan,nan`)**: When no connected component passes the threshold window `(threshold_low, threshold_high)`, `compute_bob_centroid` writes `nan,nan` instead of guessing; downstream `labo13.physics` functions drop `NaN` rows explicitly.
-
----
-
 ## Configuration (`config.yaml`)
 
-All experimental paths, detection thresholds, and per-video trim intervals are controlled exclusively through `config.yaml` (validated at startup against `workflow/schemas/config.schema.yaml`):
+All experimental paths, detection thresholds, and per-video trim intervals are controlled through `config.yaml` (validated at startup against `workflow/schemas/config.schema.yaml`):
 
-- **Selecting / Skipping Videos**: Comment out any video block under `videos:` in `config.yaml` to skip downloading and processing that video.
-- **Manual Time Trimming (`t_start`, `t_end`)**:
-  - Set `t_start` and/or `t_end` to integer seconds (e.g. `t_start: 2`, `t_end: 25`) to restrict frame extraction to $t_{\text{start}} \le t < t_{\text{end}}$.
-  - Leave `null` (`t_start: null`, `t_end: null`) for no trimming.
-  - Frame filenames (`{video}_f{index:06d}_t{seconds:.4f}.png`) preserve the original frame index and timestamp, so expanding a trim interval only runs `detect_frame` on newly added frames.
-- **Frame Rate & Extraction Parameters (`parameters:`)**:
-  - `fps: 60` — target extraction frame rate (`1`–`60`, default and maximum `60`; lower to e.g. `6` or `10` to subsample 1-in-10 or 1-in-6 frames for fast testing).
-  - `threshold_low: 100.0` — lower bound on background-subtracted intensity (`background - frame`).
-  - `threshold_high: 200.0` — upper bound on background-subtracted intensity.
-  - `morphology_disk_radius: 2` — disk radius in pixels for `skimage.morphology.closing`.
-  - `frame_batch_size: 64` — number of decoded frames buffered before parallel PNG disk flush.
-  - `png_compress_level: 1` — lossless PNG zlib compression level (`0` fastest/largest – `9` slowest/smallest).
+- **Selecting / Skipping Videos**: Comment out any video block under `videos:` to skip downloading and processing that video.
+- **Manual Time Trimming (`t_start`, `t_end`)**: Integer seconds restricting frame extraction to $t_{\text{start}} \le t < t_{\text{end}}$ (`null` for untrimmed).
+- **Detection & Extraction Parameters (`parameters:`)**:
+  - `fps: 60` — target extraction frame rate (`1`–`60`).
+  - `threshold_low: 20.0`, `threshold_high: 255.0` — intensity window on `background - frame`.
+  - `morphology_disk_radius: 3` — disk radius in pixels for `scipy.ndimage.binary_closing`.
+  - `morphology_opening_disk_radius: 6` — disk radius in pixels for `scipy.ndimage.binary_opening` (removes the thin suspension string).
+  - `roi_y_start: 1180`, `roi_y_end: 2080`, `roi_x_start: 200`, `roi_x_end: 3500` — default 4K region of interest (with per-video override on `IMG_1555`).
 
 ---
 
@@ -268,16 +161,16 @@ All experimental paths, detection thresholds, and per-video trim intervals are c
 | `labo13.types` | `FrameRecord`, `PendulumConstants`, `HarmonicFitResult` | Frozen dataclasses for frame metadata, physical constants, and fit results |
 | `labo13.io` | `download_drive_file`, `save_frame_manifest`, `load_frame_manifest`, `parse_stem_metadata`, `save_frame_detection_row`, `load_frame_detection_row`, `build_trajectories_dataframe`, `export_trajectories_csv` | Google Drive download, manifest TSV serialization, and per-frame `.txt` / `.csv` I/O |
 | `labo13.video` | `is_within_time_bounds`, `format_frame_stem`, `load_image_gray`, `save_image_gray`, `load_video_frame_gray`, `plot_sampled_frames`, `extract_trimmed_frames_gray` | PyAV video decoding, integer-second PTS trimming, and greyscale PNG I/O |
-| `labo13.detection` | `compute_bob_centroid` | Background subtraction, thresholding, morphological closing, and largest-region centroid |
-| `labo13.physics` | `compute_polar_trajectory`, `compute_harmonic_fit`, `compute_sliding_window_periods`, `compute_ode_trajectory` | Cartesian-to-polar angle conversion with error propagation, 2-stage harmonic fit, and ODE integration |
+| `labo13.detection` | `compute_bob_centroid` | `scipy.ndimage` background subtraction, closing (`r=3`), opening (`r=6`), and largest-component centroid |
+| `labo13.pendulum_analysis` | `load_active_trajectories`, `build_measured_pivot`, `compute_pivot_calibration`, `compute_angular_series`, `fit_undamped_oscillation`, `compute_amplitude_decay`, `compute_borda_period`, `build_summary_and_diagnostics`, `format_summary_latex_table`, `run_pendulum_analysis` | Stage 2 angular conversion, two-stage empirical-residual double fit, model-free peak decay, Borda comparison, and LaTeX table export |
+| `labo13.analysis_plots` | `plot_frame_processing_steps`, `plot_representative_fit`, `plot_period_vs_amplitude` | Title-free 300 dpi Matplotlib report figures |
 
 ### Library Quick-Start
 
 ```python
-import labo13 as l13
+from labo13.pendulum_analysis import run_pendulum_analysis
 
-frame = l13.load_image_gray("media/frames/IMG_1556/IMG_1556_f000000_t0.0000.png")
-x_px, y_px = l13.compute_bob_centroid(frame, l13.load_image_gray("media/raw/images/superfotograma.png"))
+summary_df, decay_df, diagnostics, latex_table = run_pendulum_analysis("results/trajectories.csv")
 ```
 
 ---
@@ -301,15 +194,18 @@ uv pip install -e ".[dev]"
 uv run snakemake --lint
 uv run snakemake -n
 
-# 2. Download and extract frames for a single video to inspect trim bounds
-uv run snakemake media/frames/IMG_1555.manifest.tsv --cores 4
-
-# 3. Run the full pipeline across all enabled videos using all CPU cores
+# 2. Run Stage 1 tracking pipeline across all enabled videos
 uv run snakemake --cores all
 
-# 4. Run code quality gates (Ruff, Mypy, Pytest)
+# 3. Run Stage 2 quantitative analysis (tables, decay check, diagnostics JSON, LaTeX table)
+uv run snakemake analyze_pendulum_all --cores 1
+
+# 4. Generate Stage 2 title-free report figures
+uv run snakemake analysis_figures_all --cores 1
+
+# 5. Run code quality gates (Ruff, Mypy, Pytest)
 uv run ruff check --fix src/ scripts/ tests/
 uv run ruff format --check src/ scripts/ tests/
-uv run mypy src/ scripts/ tests/
+uv run mypy src/labo13/pendulum_analysis.py src/labo13/analysis_plots.py
 uv run pytest -v
 ```
