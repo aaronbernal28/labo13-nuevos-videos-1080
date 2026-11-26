@@ -13,6 +13,8 @@ include: "rules/01_frames.smk"
 include: "rules/02_detect.smk"
 include: "rules/03_aggregate.smk"
 include: "rules/04_plot.smk"
+include: "rules/05_analysis.smk"
+include: "rules/06_figures.smk"
 
 
 rule all:
