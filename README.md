@@ -1,4 +1,4 @@
-# LABO 1 — Simple Pendulum: Nonlinear Behavior at Large Angles (4K 60 fps)
+# Simple Pendulum: Nonlinear Behavior at Large Angles (4K 60 fps)
 
 Reproducible 3-tier **Python + Snakemake** workflow for tracking a simple pendulum across 4K (`3840x2160`) 60 fps `.MOV` videos and analyzing the breakdown of the **small-angle (sinusoidal) approximation** as oscillation amplitude increases.
 
@@ -23,12 +23,12 @@ Convert raw 4K (`3840x2160`) 60 fps pendulum videos into a single tidy trajector
 
 ### Stage 2 — Amplitude-Dependence & Nonlinear Regime Analysis (Snakemake + Notebook)
 
-Using `results/trajectories.csv` and the pure Tier 1 analysis library (`labo13.pendulum_analysis` and `labo13.analysis_plots`) across the 14 analyzed takes (`Toma 1` at $\theta_0 \approx 56{,}34^\circ$ down to `Toma 14` at $\theta_0 \approx 2{,}17^\circ$):
+Using `results/trajectories.csv` and the pure Tier 1 analysis library (`labo13.pendulum_analysis` and `labo13.analysis_plots`) across the 14 analyzed takes (`Toma 1` at $\theta_0 \approx 56.34^\circ$ down to `Toma 14` at $\theta_0 \approx 2.17^\circ$):
 
-1. **Angular Reconstruction**: Converts detected centroids $(x, y)$ directly to $\theta(t) = \operatorname{atan2}(x - x_p, y - y_p)$ using the measured 4K suspension point $(x_p, y_p) = (1960,\,37)\text{ px}$ (cross-checked against a circular-arc fit over large-angle takes, yielding $|\Delta\theta_0| \le 0{,}03^\circ$ and $|\Delta T| \le 0{,}005\text{ ms}$).
+1. **Angular Reconstruction**: Converts detected centroids $(x, y)$ directly to $\theta(t) = \mathrm{atan2}(x - x_p, y - y_p)$ using the measured 4K suspension point $(x_p, y_p) = (1960, 37)\text{ px}$ (cross-checked against a circular-arc fit over large-angle takes, yielding $|\Delta\theta_0| \le 0.03^\circ$ and $|\Delta T| \le 0.005\text{ ms}$).
 2. **Two-Stage Empirical-Residual Double Fit**: Fits the undamped sinusoidal model $\theta(\tau) = \theta_0\cos(\omega\tau + \phi) + \theta_{\text{off}}$ initialized via zero-padded FFT and linear least squares. Stage 1 performs an unweighted nonlinear least-squares fit to estimate the empirical per-point residual dispersion $s_{\text{res}} = \sqrt{\sum r_i^2 / (N - 4)}$; Stage 2 re-fits with $\sigma_i = s_{\text{res}}$ (`absolute_sigma=True`) to propagate uncertainties directly from observed data dispersion.
 3. **Model-Free Amplitude Decay Check**: Compares first-cycle vs. last-cycle peak-to-peak amplitudes (`scipy.signal.find_peaks`) to quantify amplitude decay across each recording (`1.78%` to `9.50%`) without introducing a damped model.
-4. **Small-Angle Breakdown & Borda Expansion**: Compares $T(\theta_0)$ against the small-angle experimental limit $T_0 = (2.07235 \pm 0.00006)\text{ s}$ (compatible at $1.25\sigma$ with the theoretical prediction $T_{0,\text{teo}} = 2\pi\sqrt{L/g} = (2.07841 \pm 0.00485)\text{ s}$ for $L = 1.072\text{ m}$), identifies the $3\sigma$ transition interval $(2.17^\circ,\,3.78^\circ]$, and validates agreement with Borda's second-order expansion ($\text{RMS} = 1.05\text{ ms}$):
+4. **Small-Angle Breakdown & Borda Expansion**: Compares $T(\theta_0)$ against the small-angle experimental limit $T_0 = (2.07235 \pm 0.00006)\text{ s}$ (compatible at $1.25\sigma$ with the theoretical prediction $T_{0,\text{teo}} = 2\pi\sqrt{L/g} = (2.07841 \pm 0.00485)\text{ s}$ for $L = 1.072\text{ m}$), identifies the $3\sigma$ transition interval $(2.17^\circ, 3.78^\circ]$, and validates agreement with Borda's second-order expansion ($\text{RMS} = 1.05\text{ ms}$):
 
 $$T(\theta_0) \approx T_0\left(1 + \frac{\theta_0^2}{16} + \frac{11\,\theta_0^4}{3072} + \dots\right), \qquad T_0 = 2\pi\sqrt{\frac{L}{g}}$$
 
@@ -39,8 +39,8 @@ $$T(\theta_0) \approx T_0\left(1 + \frac{\theta_0^2}{16} + \frac{11\,\theta_0^4}
 | Quantity | Symbol | Value | Uncertainty | Notes |
 |---|---|---|---|---|
 | Pendulum length | $L$ | $1.072\text{ m}$ ($107.2\text{ cm}$) | $\pm 0.005\text{ m}$ ($\pm 0.5\text{ cm}$) | Suspension pivot to center of mass of bob |
-| Local gravity (Buenos Aires) | $g$ | $9.797\text{ m/s}^2$ | — | Reference value for $T_{0,\text{teo}} = 2\pi\sqrt{L/g}$ |
-| Measured suspension pivot | $(x_p, y_p)$ | $(1960,\,37)\text{ px}$ | — | Direct measurement on 4K (`3840x2160`) frame |
+| Local reference gravity | $g$ | $9.797\text{ m/s}^2$ | — | Reference value for $T_{0,\text{teo}} = 2\pi\sqrt{L/g}$ |
+| Measured suspension pivot | $(x_p, y_p)$ | $(1960, 37)\text{ px}$ | — | Direct measurement on 4K (`3840x2160`) frame |
 | Camera resolution & frame rate | $\text{fps}$ | $60\text{ fps}$ (`3840x2160`) | $\Delta t \approx 16.67\text{ ms}$ | Fixed camera, real-time playback |
 | Active analyzed takes | — | $14$ takes (`Toma 1`–`Toma 14`) | — | Ordered from largest ($\theta_0 = 56.34^\circ$) to smallest ($2.17^\circ$) |
 
@@ -98,9 +98,7 @@ labo13-nuevos-videos-1080/
 │   └── test_pendulum_analysis.py          ← Tests pivot fit, double fit, peak decay, Borda & LaTeX table
 ├── notebooks/
 │   ├── colab_pendulum_analysis.ipynb      ← Clean Colab/local Stage 2 analysis notebook aligned with Tier 1
-│   ├── debug_frame_detection.ipynb        ← Manual frame-detection inspection notebook
-│   └── original/
-│       └── Copia de [LABO 13] Nuevos Videos 1080.ipynb ← Original unmodified Colab notebook
+│   └── debug_frame_detection.ipynb        ← Manual frame-detection inspection notebook
 ├── media/                                 ← Gitignored raw media and intermediate frame artifacts
 │   ├── raw/
 │   │   ├── videos/                        ← Downloaded {video}.MOV files
