@@ -16,7 +16,7 @@ EXCLUDED_VIDEOS: frozenset[str] = frozenset({"IMG_1569"})
 MEASURED_PIVOT_X_PX: float = 1960.0
 MEASURED_PIVOT_Y_PX: float = 37.0
 
-# Real pendulum length (same L as Fig. 1) and local gravity (Buenos Aires)
+# Real pendulum length and local reference gravity
 LARGO_PENDULO_M: float = 1.072
 SIGMA_L_M: float = 0.005
 G_REF_M_S2: float = 9.797
