@@ -29,5 +29,6 @@ build/
 .env
 *.secret
 
-# Local plan documents
+# Local plan documents & legacy notebooks
 docs/
+notebooks/original/
