@@ -292,7 +292,7 @@ def plot_period_vs_amplitude(
 		t_borda_grid,
 		color="#ff7f0e",
 		linewidth=1.5,
-		label=r"Expansión de Borda ($2.^\circ$ orden)",
+		label=r"Expansión de Borda ($4.^\circ$ orden en $\theta_0$)",
 	)
 	ax_top.errorbar(
 		theta_deg[comp_mask],
